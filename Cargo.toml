@@ -1,0 +1,6 @@
+[package]
+name = "assassin"
+version = "0.1.0"
+authors = ["Bill Robinson <dseevr@users.noreply.github.com>"]
+
+[dependencies]
