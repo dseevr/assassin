@@ -17,7 +17,6 @@ trait DataFeed {
 // Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
 // AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292  0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
 // AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,2013-01-02
-#[allow(dead_code)]
 struct Tick {
 	symbol: String,
 	expiration_date: DateTime<FixedOffset>,
@@ -34,6 +33,64 @@ struct Tick {
 	open_interest: i32,
 	underlying_price: f64,
 	date: DateTime<FixedOffset>,
+
+	// TODO: bool or type for american vs european
+}
+
+impl Tick {
+
+	// TODO: flesh out these functions
+
+	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
+	// e.g., CSCO171117C00019000
+	fn name(&self) -> String {
+		let date = self.expiration_date.format("%y%m%d").to_string();
+		let option_type = if self.call { "C" } else { "P" }.to_string();
+		let strike = format!("{price:>0width$}0", price = self.strike_price * 100.0, width = 7).to_string();
+
+		let mut output = self.symbol.clone();
+		output.push_str(&date);
+		output.push_str(&option_type);
+		output.push_str(&strike);
+
+		output
+	}
+
+	fn days_until_expiration(&self) -> i32 {
+		// TODO: use https://docs.rs/chrono/0.4.0/chrono/trait.Datelike.html#method.num_days_from_ce until a better solution is found
+		self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
+	}
+
+	fn midpoint_price(&self) -> f64 {
+		(self.ask + self.bid) / 2.0
+	}
+
+	fn intrinsic_value(&self) -> f64 {
+		if self.call {
+			if self.underlying_price > self.strike_price {
+				self.underlying_price - self.strike_price
+			} else {
+				0.0
+			}
+		} else {
+			if self.underlying_price < self.strike_price {
+				self.strike_price - self.underlying_price
+			} else {
+				0.0
+			}
+		}
+	}
+
+	fn extrinsic_value(&self) -> f64 {
+		self.midpoint_price() - self.intrinsic_value()
+	}
+
+	fn value_ratio(&self) -> f64 {
+		// TODO: if i_value is 0, this is division by 0 and becomes infinity.
+		//       see if we should return an Option<f64> in light of that...
+		(self.extrinsic_value() / self.intrinsic_value()) * 100.0
+	}
+
 }
 
 trait Model {
@@ -67,7 +124,7 @@ impl Simulation {
 
 		while let Some(tick) = self.feed.next_tick() {
 			self.model.process_tick(tick);
-			self.ticks_processed += 1
+			self.ticks_processed += 1;
 		}
 
 		println!("simulation finished");
@@ -77,7 +134,8 @@ impl Simulation {
 	fn total_run_time(&self) -> f64 {
 		let seconds = self.start_time.elapsed().as_secs() as f64;
 		let nanoseconds = self.start_time.elapsed().subsec_nanos() as f64 * 1e-9;
-		return seconds + nanoseconds;
+
+		seconds + nanoseconds
 	}
 }
 
@@ -96,8 +154,25 @@ impl Model for DummyModel {
 		"dummy model"
 	}
 
-	fn process_tick(&mut self, _tick: Tick) {
-		// println!("spread: {}", tick.ask - tick.bid);
+	fn process_tick(&mut self, tick: Tick) {
+		// if tick.volume < 1000 {
+		// 	return;
+		// }
+
+		// if tick.intrinsic_value() < 10.0 {
+		// 	return;
+		// }
+
+		println!("=======================");
+		println!("name: {}", tick.name());
+		println!("spread: {}", tick.ask - tick.bid);
+		println!("intrinsic: {}", tick.intrinsic_value());
+		println!("extrinsic: {}", tick.extrinsic_value());
+		println!("value ratio: {:.2}%", tick.value_ratio());
+		println!("last price: {}", tick.last_price);
+		println!("underlying price: {}", tick.underlying_price);
+		println!("date: {} expiration: {}", tick.date, tick.expiration_date);
+		println!("days left: {}", tick.days_until_expiration());
 	}
 }
 
