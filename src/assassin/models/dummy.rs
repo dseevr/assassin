@@ -10,7 +10,7 @@ impl DummyModel {
 }
 
 impl Model for DummyModel {
-	fn get_name(&self) -> &'static str {
+	fn name(&self) -> &'static str {
 		"dummy model"
 	}
 

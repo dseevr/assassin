@@ -14,7 +14,7 @@ pub trait DataFeed {
 }
 
 pub trait Model {
-	fn get_name(&self) -> &'static str; // TODO: rename to just name()
+	fn name(&self) -> &'static str; // TODO: rename to just name()
 	fn process_tick(&mut self, Tick, &mut Broker);
 	fn before_simulation(&mut self, &mut Broker);
 	fn after_simulation(&mut self, &mut Broker);

@@ -53,7 +53,7 @@ impl PMCC {
 }
 
 impl Model for PMCC {
-	fn get_name(&self) -> &'static str {
+	fn name(&self) -> &'static str {
 		"Poor Man's Covered Call"
 	}
 
