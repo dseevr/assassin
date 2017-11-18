@@ -1,3 +1,5 @@
+use assassin::quote::Quote;
+
 extern crate chrono;
 
 use self::chrono::prelude::*;
@@ -62,6 +64,18 @@ impl Tick {
 			underlying_price: underlying_price,
 			date: date,
 		}
+	}
+
+	pub fn formatted_date(&self) -> String {
+		self.date.format("%y%m%d").to_string()
+	}
+
+	pub fn formatted_expiration_date(&self) -> String {
+		self.expiration_date.format("%y%m%d").to_string()
+	}
+
+	pub fn quote(&self) -> Quote {
+		Quote::new(self.bid, self.ask, self.formatted_expiration_date())
 	}
 
 	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision

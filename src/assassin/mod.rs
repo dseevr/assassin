@@ -2,6 +2,7 @@ pub mod brokers;
 pub mod commission;
 pub mod order;
 pub mod position;
+pub mod quote;
 pub mod simulation;
 pub mod tick;
 

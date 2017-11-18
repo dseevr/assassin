@@ -8,6 +8,8 @@ pub trait Broker {
 	fn open_positions(&self) -> Vec<Position>;
 	fn total_order_count(&self) -> i32;
 	fn commission_paid(&self) -> f64;
+	fn close_all_positions(&mut self);
+	fn next_tick(&mut self) -> Option<Tick>;
 }
 
 pub trait Commission {
@@ -19,7 +21,7 @@ pub trait DataFeed {
 }
 
 pub trait Model {
-	fn name(&self) -> &'static str; // TODO: rename to just name()
+	fn name(&self) -> &'static str;
 	fn process_tick(&mut self, Tick, &mut Broker);
 	fn before_simulation(&mut self, &mut Broker);
 	fn after_simulation(&mut self, &mut Broker);

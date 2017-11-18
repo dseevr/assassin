@@ -8,17 +8,13 @@ use assassin::commission::charles_schwab::CharlesSchwab;
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 
 fn main() {
-	let base_feed = DiscountOptionData::new(INPUT_FILE);
+	let feed = DiscountOptionData::new(INPUT_FILE);
 	let test_model = PMCC::new();
 
 	let commission = CharlesSchwab::new();
-	let broker = BasicBroker::new(10_000.0, Box::new(commission));
+	let broker = BasicBroker::new(10_000.0, Box::new(commission), Box::new(feed));
 
-	let mut simulation = Simulation::new(
-		Box::new(test_model),
-		Box::new(base_feed),
-		Box::new(broker),
-	);
+	let mut simulation = Simulation::new(Box::new(test_model), Box::new(broker));
 
 	simulation.run();
 
@@ -27,4 +23,6 @@ fn main() {
 		simulation.ticks_processed(),
 		simulation.total_run_time()
 	);
+
+	// TODO: output starting capital, ending capital, profit, growth %
 }
