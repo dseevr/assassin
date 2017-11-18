@@ -64,8 +64,6 @@ impl Tick {
 		}
 	}
 
-	// TODO: flesh out these functions
-
 	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
 	// e.g., CSCO171117C00019000
 	pub fn name(&self) -> String {

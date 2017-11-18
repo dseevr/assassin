@@ -59,19 +59,27 @@ impl DataFeed for DiscountOptionData {
 		let v: Vec<&str> = l.split(',').collect();
 		assert_eq!(v.len(), 18);
 
-		// println!("length: {}", v.len());
-
 		let symbol: String = v[0].parse().unwrap();
 
 		let expiration_date_data: String = v[1].parse().unwrap();
 		let expiration_date_data_str: &str = &*(expiration_date_data + TIME_TIMEZONE);
-		// println!("expiration_date_data_str: {}", expiration_date_data_str);
 		let expiration_date: DateTime<FixedOffset> = DateTime::parse_from_str(expiration_date_data_str, CHRONO_FORMAT).unwrap();
 
 		let ask: f64 = v[2].parse().unwrap();
 		let bid: f64 = v[4].parse().unwrap();
+
+		// TODO: this might be legit in certain market situations...
+		if bid > ask {
+			panic!("bid {} is > ask {}", bid, ask);
+		}
+
 		let last_price: f64 = v[6].parse().unwrap();
 		let call: String = v[7].parse().unwrap();
+
+		if call != "call" && call != "put" {
+			panic!("expected 'call' or 'put', got {}", call);
+		}
+
 		let strike_price: f64 = v[8].parse().unwrap();
 		let volume: i32 = v[9].parse().unwrap();
 		let implied_volatility: f64 = v[10].parse().unwrap();
@@ -83,7 +91,6 @@ impl DataFeed for DiscountOptionData {
 
 		let date_data: String = v[17].parse().unwrap();
 		let date_data_str: &str = &*(date_data + TIME_TIMEZONE);
-		// println!("date_data_str: {}", date_data_str);
 		let date: DateTime<FixedOffset> = DateTime::parse_from_str(date_data_str, CHRONO_FORMAT).unwrap();
 
 		let t = Tick::new(
