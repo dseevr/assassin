@@ -82,6 +82,14 @@ impl Order {
 		self.symbol.clone()
 	}
 
+	pub fn quantity(&self) -> i32 {
+		self.quantity
+	}
+
+	pub fn limit(&self) -> f64 {
+		self.limit
+	}
+
 	pub fn canonical_quantity(&self) -> i32 {
 		if self.buy {
 			self.quantity

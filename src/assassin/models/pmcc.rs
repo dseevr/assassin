@@ -51,10 +51,11 @@ impl PMCC {
 		}
 
 		println!(
-			"Cash at EOD: ${:.2} - positions open: {} - total orders: {}",
+			"Cash at EOD: ${:.2} - positions open: {} - total orders: {} - commish paid: ${:.2}",
 			broker.account_balance(),
 			broker.open_positions().len(),
 			broker.total_order_count(),
+			broker.commission_paid(),
 		);
 	}
 }

@@ -8,10 +8,12 @@ pub struct BasicBroker {
 	balance: f64,
 	open_positions: HashMap<String, Position>,
 	orders: Vec<Order>,
+	commission_schedule: Box<Commission>,
+	commission_paid: f64,
 }
 
 impl BasicBroker {
-	pub fn new(initial_balance: f64) -> BasicBroker {
+	pub fn new(initial_balance: f64, commission_schedule: Box<Commission>) -> BasicBroker {
 		if initial_balance <= 0.0 {
 			panic!("balance must be > 0.0 (got {})", initial_balance);
 		}
@@ -20,6 +22,8 @@ impl BasicBroker {
 			balance: initial_balance,
 			open_positions: HashMap::new(),
 			orders: vec![],
+			commission_schedule: commission_schedule,
+			commission_paid: 0.0,
 		}
 	}
 }
@@ -46,6 +50,12 @@ impl Broker for BasicBroker {
 
 		self.balance += order.canonical_cost_basis();
 
+		// apply commission to balance and running total of paid commission
+		let commish = self.commission_schedule.commission_for(order);
+
+		self.balance -= commish;
+		self.commission_paid += commish;
+
 		true
 	}
 
@@ -63,5 +73,9 @@ impl Broker for BasicBroker {
 
 	fn total_order_count(&self) -> i32 {
 		self.orders.len() as i32
+	}
+
+	fn commission_paid(&self) -> f64 {
+		self.commission_paid
 	}
 }

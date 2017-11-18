@@ -7,6 +7,11 @@ pub trait Broker {
 	fn process_order(&mut self, Order) -> bool;
 	fn open_positions(&self) -> Vec<Position>;
 	fn total_order_count(&self) -> i32;
+	fn commission_paid(&self) -> f64;
+}
+
+pub trait Commission {
+	fn commission_for(&self, Order) -> f64;
 }
 
 pub trait DataFeed {
