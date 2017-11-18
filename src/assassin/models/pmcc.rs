@@ -1,3 +1,4 @@
+use assassin::order::Order;
 use assassin::tick::Tick;
 use assassin::traits::*;
 
@@ -8,10 +9,6 @@ pub struct PMCC {
 	first_record: bool,
 	current_date: i32,
 	ticks: Vec<Box<Tick>>,
-}
-
-pub struct Order {
-
 }
 
 impl PMCC {
@@ -31,22 +28,27 @@ impl PMCC {
 		None
 	}
 
-	fn run_logic(&mut self, broker: &Broker) {
+	fn run_logic(&mut self, broker: &mut Broker) {
 		println!("running logic for day ({} records)", self.ticks.len());
 
-		for tick in &self.ticks {
+		for _tick in &self.ticks {
 			// self.update_indicators(tick);
 
 			if let Some(order) = self.generate_open_order() {
-				// broker.process_order(order)
+				broker.process_order(order)
 			}
 
 			if let Some(order) = self.generate_close_order() {
-				// broker.process_order(order)
+				broker.process_order(order)
 			}
 		}
 
-		println!("Cash at EOD: ${:.2}", broker.account_balance());
+		println!(
+			"Cash at EOD: ${:.2} - positions open: {} - total trades: {}",
+			broker.account_balance(),
+			broker.open_positions().len(),
+			broker.total_trade_count(),
+		);
 	}
 }
 
@@ -55,9 +57,9 @@ impl Model for PMCC {
 		"Poor Man's Covered Call"
 	}
 
-	fn before_simulation(&mut self, _broker: &Broker) {}
+	fn before_simulation(&mut self, _broker: &mut Broker) {}
 
-	fn process_tick(&mut self, tick: Tick, broker: &Broker) {
+	fn process_tick(&mut self, tick: Tick, broker: &mut Broker) {
 		let current_date = tick.date().num_days_from_ce();
 
 		if self.first_record {
@@ -80,7 +82,7 @@ impl Model for PMCC {
 		self.current_date = current_date;
 	}
 
-	fn after_simulation(&mut self, broker: &Broker) {
+	fn after_simulation(&mut self, broker: &mut Broker) {
 		// run again to handle the last day's data
 		self.run_logic(broker);
 	}

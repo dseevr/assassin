@@ -32,15 +32,15 @@ impl Simulation {
 	}
 
 	pub fn run(&mut self) {
-		self.model.before_simulation(&*self.broker);
+		self.model.before_simulation(&mut *self.broker);
 
 		while let Some(tick) = self.feed.next_tick() {
 			// TODO: maybe check that the ticks are in chronological order here?
-			self.model.process_tick(tick, &*self.broker);
+			self.model.process_tick(tick, &mut *self.broker);
 			self.ticks_processed += 1;
 		}
 
-		self.model.after_simulation(&*self.broker);
+		self.model.after_simulation(&mut *self.broker);
 	}
 
 	pub fn total_run_time(&self) -> f64 {

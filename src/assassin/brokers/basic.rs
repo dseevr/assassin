@@ -1,3 +1,5 @@
+use assassin::order::Order;
+use assassin::position::Position;
 use assassin::traits::*;
 
 pub struct BasicBroker {
@@ -17,7 +19,15 @@ impl Broker for BasicBroker {
 		0.0
 	}
 
-	fn process_order(&mut self) {
-		
+	fn process_order(&mut self, order: Order) {
+
+	}
+
+	fn open_positions(&self) -> Vec<Box<Position>> {
+		vec![]
+	}
+
+	fn total_trade_count(&self) -> i32 {
+		0
 	}
 }
