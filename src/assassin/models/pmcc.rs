@@ -8,7 +8,7 @@ use self::chrono::prelude::*;
 pub struct PMCC {
 	first_record: bool,
 	current_date: i32,
-	ticks: Vec<Box<Tick>>,
+	ticks: Vec<Tick>,
 }
 
 impl PMCC {
@@ -21,33 +21,40 @@ impl PMCC {
 	}
 
 	fn generate_open_order(&self) -> Option<Order> {
-		None
+		let o = Order::new_buy_open_order("AAPL".to_string(), 15.0, 10, 2.25);
+
+		Some(o)
 	}
 
 	fn generate_close_order(&self) -> Option<Order> {
+		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 10, 2.0);
+
+		// Some(o)
 		None
 	}
 
 	fn run_logic(&mut self, broker: &mut Broker) {
 		println!("running logic for day ({} records)", self.ticks.len());
 
-		for _tick in &self.ticks {
-			// self.update_indicators(tick);
+		// for _tick in &self.ticks {
+		// 	// self.update_indicators(tick);
+		// }
 
-			if let Some(order) = self.generate_open_order() {
-				broker.process_order(order)
-			}
+		// at EOD, see if we should buy or sell anything
 
-			if let Some(order) = self.generate_close_order() {
-				broker.process_order(order)
-			}
+		if let Some(order) = self.generate_open_order() {
+			broker.process_order(order); // TODO: check result
+		}
+
+		if let Some(order) = self.generate_close_order() {
+			broker.process_order(order); // TODO: check result
 		}
 
 		println!(
-			"Cash at EOD: ${:.2} - positions open: {} - total trades: {}",
+			"Cash at EOD: ${:.2} - positions open: {} - total orders: {}",
 			broker.account_balance(),
 			broker.open_positions().len(),
-			broker.total_trade_count(),
+			broker.total_order_count(),
 		);
 	}
 }
@@ -69,7 +76,7 @@ impl Model for PMCC {
 
 		// still gathering data for the current day
 		if current_date == self.current_date {
-			self.ticks.push(Box::new(tick));
+			self.ticks.push(tick);
 			return;
 		}
 
@@ -78,7 +85,7 @@ impl Model for PMCC {
 
 		// prepare for the next day
 		self.ticks.clear();
-		self.ticks.push(Box::new(tick));
+		self.ticks.push(tick);
 		self.current_date = current_date;
 	}
 

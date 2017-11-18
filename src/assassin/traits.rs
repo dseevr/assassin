@@ -4,9 +4,9 @@ use assassin::tick::Tick;
 
 pub trait Broker {
 	fn account_balance(&self) -> f64;
-	fn process_order(&mut self, Order);
-	fn open_positions(&self) -> Vec<Box<Position>>;
-	fn total_trade_count(&self) -> i32;
+	fn process_order(&mut self, Order) -> bool;
+	fn open_positions(&self) -> Vec<Position>;
+	fn total_order_count(&self) -> i32;
 }
 
 pub trait DataFeed {

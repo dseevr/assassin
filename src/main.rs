@@ -9,7 +9,7 @@ static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 fn main() {
 	let base_feed = DiscountOptionData::new(INPUT_FILE);
 	let test_model = PMCC::new();
-	let broker = BasicBroker::new();
+	let broker = BasicBroker::new(10_000.0);
 
 	let mut simulation = Simulation::new(
 		Box::new(test_model),
