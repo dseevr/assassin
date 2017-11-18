@@ -10,6 +10,10 @@ pub struct PMCC {
 	ticks: Vec<Box<Tick>>,
 }
 
+pub struct Order {
+
+}
+
 impl PMCC {
 	pub fn new() -> PMCC {
 		PMCC{
@@ -19,8 +23,30 @@ impl PMCC {
 		}
 	}
 
-	fn run_logic(&mut self) {
+	fn generate_open_order(&self) -> Option<Order> {
+		None
+	}
+
+	fn generate_close_order(&self) -> Option<Order> {
+		None
+	}
+
+	fn run_logic(&mut self, broker: &Broker) {
 		println!("running logic for day ({} records)", self.ticks.len());
+
+		for tick in &self.ticks {
+			// self.update_indicators(tick);
+
+			if let Some(order) = self.generate_open_order() {
+				// broker.process_order(order)
+			}
+
+			if let Some(order) = self.generate_close_order() {
+				// broker.process_order(order)
+			}
+		}
+
+		println!("Cash at EOD: ${:.2}", broker.account_balance());
 	}
 }
 
@@ -29,9 +55,9 @@ impl Model for PMCC {
 		"Poor Man's Covered Call"
 	}
 
-	fn before_simulation(&mut self) {}
+	fn before_simulation(&mut self, _broker: &Broker) {}
 
-	fn process_tick(&mut self, tick: Tick) {
+	fn process_tick(&mut self, tick: Tick, broker: &Broker) {
 		let current_date = tick.date().num_days_from_ce();
 
 		if self.first_record {
@@ -46,7 +72,7 @@ impl Model for PMCC {
 		}
 
 		// day has changed, so run normal logic
-		self.run_logic();
+		self.run_logic(broker);
 
 		// prepare for the next day
 		self.ticks.clear();
@@ -54,8 +80,8 @@ impl Model for PMCC {
 		self.current_date = current_date;
 	}
 
-	fn after_simulation(&mut self) {
+	fn after_simulation(&mut self, broker: &Broker) {
 		// run again to handle the last day's data
-		self.run_logic();
+		self.run_logic(broker);
 	}
 }
