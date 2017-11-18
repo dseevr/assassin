@@ -24,15 +24,15 @@ impl Simulation {
 	}
 
 	pub fn run(&mut self) {
-		println!("running simulation");
+		self.model.before_simulation();
 
 		while let Some(tick) = self.feed.next_tick() {
+			// TODO: maybe check that the ticks are in chronological order here?
 			self.model.process_tick(tick);
 			self.ticks_processed += 1;
 		}
 
-		println!("simulation finished");
-		println!("processed {} ticks", self.ticks_processed);
+		self.model.after_simulation();
 	}
 
 	pub fn total_run_time(&self) -> f64 {
@@ -42,7 +42,7 @@ impl Simulation {
 		seconds + nanoseconds
 	}
 
-        pub fn ticks_processed(&self) -> i64 {
-                self.ticks_processed
-        }
+	pub fn ticks_processed(&self) -> i64 {
+		self.ticks_processed
+	}
 }

@@ -14,15 +14,9 @@ impl Model for DummyModel {
 		"dummy model"
 	}
 
-	fn process_tick(&mut self, tick: Tick) {
-		// if tick.volume < 1000 {
-		// 	return;
-		// }
+	fn before_simulation(&mut self) {}
 
-		// if tick.intrinsic_value() < 10.0 {
-		// 	return;
-		// }
+	fn process_tick(&mut self, _tick: Tick) {}
 
-		tick.print_deets();
-	}
+	fn after_simulation(&mut self) {}
 }

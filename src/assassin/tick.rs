@@ -127,4 +127,8 @@ impl Tick {
 		println!("days left: {}", self.days_until_expiration());
 	}
 
+	// ----- getters -----
+	pub fn date(&self) -> DateTime<FixedOffset> {
+		self.date
+	}
 }
