@@ -1,4 +1,5 @@
 use assassin::order::Order;
+use assassin::quote::Quote;
 use assassin::tick::Tick;
 use assassin::traits::*;
 
@@ -8,7 +9,6 @@ use self::chrono::prelude::*;
 pub struct PMCC {
 	first_record: bool,
 	current_date: i32,
-	ticks: Vec<Tick>,
 }
 
 impl PMCC {
@@ -16,17 +16,17 @@ impl PMCC {
 		PMCC{
 			first_record: true,
 			current_date: 0,
-			ticks: vec![],
 		}
 	}
 
-	fn generate_open_order(&self) -> Option<Order> {
-		let o = Order::new_buy_open_order("AAPL".to_string(), 15.0, 10, 2.25);
+	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
+		// let o = Order::new_buy_open_order(Box::new(tick.clone()), 10, 2.25);
 
-		Some(o)
+		// Some(o)
+		None
 	}
 
-	fn generate_close_order(&self) -> Option<Order> {
+	fn generate_close_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
 		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 10, 2.0);
 
 		// Some(o)
@@ -34,19 +34,18 @@ impl PMCC {
 	}
 
 	fn run_logic(&mut self, broker: &mut Broker) {
-		println!("running logic for day ({} records)", self.ticks.len());
+		let quotes = broker.quotes_for("AAPL".to_string());
 
-		// for _tick in &self.ticks {
-		// 	// self.update_indicators(tick);
-		// }
+		println!("running logic for day ({} records)", quotes.len());
 
-		// at EOD, see if we should buy or sell anything
+		// TODO: update any charts, indicators, etc.
+		// self.update_indicators(quotes);
 
-		if let Some(order) = self.generate_open_order() {
+		if let Some(order) = self.generate_open_order(&quotes) {
 			broker.process_order(order); // TODO: check result
 		}
 
-		if let Some(order) = self.generate_close_order() {
+		if let Some(order) = self.generate_close_order(&quotes) {
 			broker.process_order(order); // TODO: check result
 		}
 
@@ -67,6 +66,8 @@ impl Model for PMCC {
 
 	fn before_simulation(&mut self, _broker: &mut Broker) {}
 
+	// NOTE: this is a hack to ensure that we only run_logic() once
+	//       per day because we don't have intraday data.
 	fn process_tick(&mut self, tick: Tick, broker: &mut Broker) {
 		let current_date = tick.date().num_days_from_ce();
 
@@ -77,7 +78,6 @@ impl Model for PMCC {
 
 		// still gathering data for the current day
 		if current_date == self.current_date {
-			self.ticks.push(tick);
 			return;
 		}
 
@@ -85,8 +85,6 @@ impl Model for PMCC {
 		self.run_logic(broker);
 
 		// prepare for the next day
-		self.ticks.clear();
-		self.ticks.push(tick);
 		self.current_date = current_date;
 	}
 

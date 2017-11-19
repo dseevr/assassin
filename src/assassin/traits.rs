@@ -1,5 +1,6 @@
 use assassin::order::Order;
 use assassin::position::Position;
+use assassin::quote::Quote;
 use assassin::tick::Tick;
 
 pub trait Broker {
@@ -10,6 +11,7 @@ pub trait Broker {
 	fn commission_paid(&self) -> f64;
 	fn close_all_positions(&mut self);
 	fn next_tick(&mut self) -> Option<Tick>;
+	fn quotes_for(&self, String) -> Vec<Quote>;
 }
 
 pub trait Commission {

@@ -8,6 +8,7 @@ use self::chrono::prelude::*;
 // AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292  0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
 // AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,2013-01-02
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct Tick {
 	symbol: String,
 	expiration_date: DateTime<FixedOffset>,
@@ -75,7 +76,7 @@ impl Tick {
 	}
 
 	pub fn quote(&self) -> Quote {
-		Quote::new(self.bid, self.ask, self.formatted_expiration_date())
+		Quote::new(&self)
 	}
 
 	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
@@ -141,8 +142,23 @@ impl Tick {
 		println!("days left: {}", self.days_until_expiration());
 	}
 
-	// ----- getters -----
 	pub fn date(&self) -> DateTime<FixedOffset> {
 		self.date
+	}
+
+	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+		self.expiration_date
+	}
+
+	pub fn symbol(&self) -> String {
+		self.symbol.clone()
+	}
+
+	pub fn bid(&self) -> f64 {
+		self.bid
+	}
+
+	pub fn ask(&self) -> f64 {
+		self.ask
 	}
 }

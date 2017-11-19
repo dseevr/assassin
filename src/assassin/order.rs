@@ -1,23 +1,28 @@
+use assassin::tick::Tick;
+
+extern crate chrono;
+
+use self::chrono::prelude::*;
+
 #[derive(Clone)]
 pub struct Order {
-	symbol: String,
+	tick: Box<Tick>,
 	buy: bool,
 	open: bool,
-	strike: f64,
 	quantity: i32,
 	limit: f64,
 }
 
 impl Order {
-	pub fn new_buy_open_order(symbol: String, strike: f64, quantity: i32, limit: f64) -> Order {
-		if symbol.len() == 0 {
-			panic!("symbol must be > 0 characters");
-		}
+	pub fn option_name(&self) -> String {
+		self.tick.name()
+	}
 
-		if strike <= 0.0 {
-			panic!("strike must be > 0.0 (got {})", strike);
-		}
+	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+		self.tick.expiration_date()
+	}
 
+	pub fn new_buy_open_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
 		if quantity <= 0 {
 			panic!("quantity must be > 0 (got {})", quantity);
 		}
@@ -27,31 +32,30 @@ impl Order {
 		}
 
 		Order{
-			symbol: symbol,
+			tick: tick,
 			buy: true,
 			open: true,
-			strike: strike,
 			quantity: quantity,
 			limit: limit,
 		}
 	}
 
-	pub fn new_sell_open_order(symbol: String, strike: f64, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(symbol, strike, quantity, limit);
+	pub fn new_sell_open_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(tick, quantity, limit);
 		o.buy = false;
 
 		o
 	}
 
-	pub fn new_buy_close_order(symbol: String, strike: f64, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(symbol, strike, quantity, limit);
+	pub fn new_buy_close_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(tick, quantity, limit);
 		o.open = false;
 
 		o
 	}
 
-	pub fn new_sell_close_order(symbol: String, strike: f64, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(symbol, strike, quantity, limit);
+	pub fn new_sell_close_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(tick, quantity, limit);
 		o.buy = false;
 		o.open = false;
 
@@ -79,7 +83,7 @@ impl Order {
 	}
 
 	pub fn symbol(&self) -> String {
-		self.symbol.clone()
+		self.tick.symbol().clone()
 	}
 
 	pub fn quantity(&self) -> i32 {
