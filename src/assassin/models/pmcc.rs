@@ -20,10 +20,6 @@ impl PMCC {
 	}
 
 	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
-		if quotes.is_empty() {
-			return None;
-		}
-
 		// TODO: logic for picking a quote
 		let quote = quotes[0].clone();
 
@@ -44,15 +40,17 @@ impl PMCC {
 
 		println!("running logic for day ({} records)", quotes.len());
 
-		// TODO: update any charts, indicators, etc.
-		// self.update_indicators(quotes);
+		if ! quotes.is_empty() {
+			// TODO: update any charts, indicators, etc.
+			// self.update_indicators(quotes);
 
-		if let Some(order) = self.generate_open_order(&quotes) {
-			broker.process_order(order); // TODO: check result
-		}
+			if let Some(order) = self.generate_open_order(&quotes) {
+				broker.process_order(order); // TODO: check result
+			}
 
-		if let Some(order) = self.generate_close_order(&quotes) {
-			broker.process_order(order); // TODO: check result
+			if let Some(order) = self.generate_close_order(&quotes) {
+				broker.process_order(order); // TODO: check result
+			}
 		}
 
 		println!(

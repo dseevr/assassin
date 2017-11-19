@@ -17,6 +17,7 @@ pub struct BasicBroker {
 	commission_schedule: Box<Commission>,
 	commission_paid: f64,
 	data_feed: Box<DataFeed>,
+	// TODO: convert this into a HashMap<String, HashMap<String,Quote>>
 	quotes: HashMap<String, Quote>,
 	current_date: DateTime<FixedOffset>,
 }
@@ -84,7 +85,7 @@ impl Broker for BasicBroker {
 		// apply commission to balance and running total of paid commission
 		let commish = self.commission_schedule.commission_for(order);
 
-		// TODO: edge case... commission is not factor into available money before applying order
+		// TODO: edge case... commission is not factored into available money before applying order
 		self.balance -= commish;
 		self.commission_paid += commish;
 
