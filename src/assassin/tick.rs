@@ -67,6 +67,10 @@ impl Tick {
 		}
 	}
 
+	pub fn strike_price(&self) -> f64 {
+		self.strike_price
+	}
+
 	pub fn formatted_date(&self) -> String {
 		self.date.format("%y%m%d").to_string()
 	}

@@ -15,7 +15,7 @@ pub trait Broker {
 }
 
 pub trait Commission {
-	fn commission_for(&self, Order) -> f64;
+	fn commission_for(&self, &Order) -> f64;
 }
 
 pub trait DataFeed {

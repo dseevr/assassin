@@ -61,11 +61,19 @@ impl Broker for BasicBroker {
 	// TODO: positions have a correct cost basis
 
 	fn process_order(&mut self, order: Order) -> bool {
+
+		// TODO: assign a unique id to each order
+
+		println!("Order received: {}", order.summary());
+
+		let commish = self.commission_schedule.commission_for(&order);
+
 		// ensure enough cash available
-		if order.cost_basis() > self.balance {
+		if order.cost_basis() + commish > self.balance {
 			println!(
-				"not enough money (need {}, have {})",
+				"not enough money (need ${:.2} + ${:.2} commission, have ${:.2})",
 				order.cost_basis(),
+				commish,
 				self.balance
 			);
 			return false;
@@ -83,11 +91,15 @@ impl Broker for BasicBroker {
 		self.balance += order.canonical_cost_basis();
 
 		// apply commission to balance and running total of paid commission
-		let commish = self.commission_schedule.commission_for(order);
-
 		// TODO: edge case... commission is not factored into available money before applying order
 		self.balance -= commish;
 		self.commission_paid += commish;
+
+		println!(
+			"ORDER FILLED. Commission: ${:.2} - New balance: ${:.2}",
+			commish,
+			self.balance,
+		);
 
 		true
 	}
@@ -157,16 +169,31 @@ impl Broker for BasicBroker {
 					}
 				}
 
-				println!(
-					"closed {} positions for {}",
-					closed_position_count,
-					self.current_date
-				);
-				println!(
-					"purged {} expired entries for {}",
-					removed_entry_count,
-					self.current_date,
-				);
+				let mut printed = false;
+
+				if closed_position_count > 0 {
+					println!(
+						"closed {} positions for {}",
+						closed_position_count,
+						self.current_date
+					);
+
+					printed = true;
+				}
+
+				if removed_entry_count > 0 {
+					println!(
+						"purged {} expired entries for {}",
+						removed_entry_count,
+						self.current_date,
+					);
+
+					printed = true;
+				}
+
+				if printed {
+					println!("");
+				}
 
 				self.quotes = new_quotes;
 			}

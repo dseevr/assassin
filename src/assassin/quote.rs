@@ -10,6 +10,7 @@ pub struct Quote {
 	symbol: String,
 	bid: f64,
 	ask: f64,
+	strike_price: f64,
 	expiration_date: DateTime<FixedOffset>,
 	// TODO: depth, etc. if available
 }
@@ -25,8 +26,13 @@ impl Quote {
 			symbol: tick.symbol(),
 			bid: tick.bid(),
 			ask: tick.ask(),
+			strike_price: tick.strike_price(),
 			expiration_date: tick.expiration_date(),
 		}
+	}
+
+	pub fn strike_price(&self) -> f64 {
+		self.strike_price
 	}
 
 	pub fn name(&self) -> String {

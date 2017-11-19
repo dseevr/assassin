@@ -49,12 +49,6 @@ impl Simulation {
 	}
 
 	pub fn print_stats(&self) {
-		println!(
-			"Ran simulation ({} ticks) in {:.2} seconds",
-			self.ticks_processed,
-			self.total_run_time(),
-		);
-		println!("");
 
 		let balance = self.broker.account_balance();
 
@@ -72,8 +66,15 @@ impl Simulation {
 		};
 
 		println!("Capital growth: {:.2}%", growth);
-
 		println!("Total orders: {}", self.broker.total_order_count());
+
+		println!("");
+		println!(
+			"Ran simulation ({} ticks) in {:.2} seconds",
+			self.ticks_processed,
+			self.total_run_time(),
+		);
+		println!("");
 	}
 
 	pub fn total_run_time(&self) -> f64 {

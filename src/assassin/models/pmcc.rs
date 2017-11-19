@@ -8,14 +8,15 @@ use self::chrono::prelude::*;
 
 pub struct PMCC {
 	first_record: bool,
-	current_date: i32,
+	current_date: DateTime<FixedOffset>,
 }
 
 impl PMCC {
 	pub fn new() -> PMCC {
 		PMCC{
 			first_record: true,
-			current_date: 0,
+			// this is just so we have a default value
+			current_date: FixedOffset::east(0).ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
 		}
 	}
 
@@ -36,11 +37,18 @@ impl PMCC {
 	}
 
 	fn run_logic(&mut self, broker: &mut Broker) {
+		let day = self.current_date.format("%Y-%m-%d");
+		println!(" ===== start of {} ==================================================", day);
+		println!("");
+
 		let quotes = broker.quotes_for("AAPL".to_string());
 
-		println!("running logic for day ({} records)", quotes.len());
+		if quotes.is_empty() {
+			println!("no quotes available, skipping day");
+		} else {
+			println!("running buy/sell logic for day ({} quotes available)", quotes.len());
+			println!("");
 
-		if ! quotes.is_empty() {
 			// TODO: update any charts, indicators, etc.
 			// self.update_indicators(quotes);
 
@@ -53,13 +61,18 @@ impl PMCC {
 			}
 		}
 
+		// show summary for day
+		println!("");
+		println!(" ----- {} end of day summary -----", day);
+		println!("");
 		println!(
-			"Cash at EOD: ${:.2} - positions open: {} - total orders: {} - commish paid: ${:.2}",
+			"Balance: ${:.2}\npositions open: {}\ntotal orders: {}\ncommish paid: ${:.2}",
 			broker.account_balance(),
 			broker.open_positions().len(),
 			broker.total_order_count(),
 			broker.commission_paid(),
 		);
+		println!("");
 	}
 }
 
@@ -73,7 +86,7 @@ impl Model for PMCC {
 	// NOTE: this is a hack to ensure that we only run_logic() once
 	//       per day because we don't have intraday data.
 	fn process_tick(&mut self, tick: Tick, broker: &mut Broker) {
-		let current_date = tick.date().num_days_from_ce();
+		let current_date = tick.date();
 
 		if self.first_record {
 			self.first_record = false;
@@ -82,7 +95,7 @@ impl Model for PMCC {
 		}
 
 		// still gathering data for the current day
-		if current_date == self.current_date {
+		if current_date.num_days_from_ce() == self.current_date.num_days_from_ce() {
 			return;
 		}
 

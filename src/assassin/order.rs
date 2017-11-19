@@ -11,9 +11,26 @@ pub struct Order {
 	open: bool,
 	quantity: i32,
 	limit: f64,
+	strike_price: f64,
 }
 
 impl Order {
+	pub fn buy_or_sell_string(&self) -> String {
+		if self.buy { "BUY" } else { "SELL" }.to_string()
+	}
+
+	// "AAPL: BUY 10 CALL $150 STRIKE at LIMIT $2.50"
+	pub fn summary(&self) -> String {
+		format!(
+			"{} {} {} ${:.2} STRIKE at LIMIT ${:.2}",
+			self.symbol(),
+			self.buy_or_sell_string(),
+			self.quantity,
+			self.strike_price,
+			self.limit,
+		)
+	}
+
 	pub fn option_name(&self) -> String {
 		self.quote.name()
 	}
@@ -37,6 +54,7 @@ impl Order {
 			open: true,
 			quantity: quantity,
 			limit: limit,
+			strike_price: quote.strike_price(),
 		}
 	}
 
