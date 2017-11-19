@@ -7,6 +7,7 @@ use self::chrono::prelude::*;
 #[derive(Clone)]
 pub struct Quote {
 	name: String,
+	symbol: String,
 	bid: f64,
 	ask: f64,
 	expiration_date: DateTime<FixedOffset>,
@@ -21,10 +22,19 @@ impl Quote {
 
 		Quote{
 			name: tick.name(),
+			symbol: tick.symbol(),
 			bid: tick.bid(),
 			ask: tick.ask(),
 			expiration_date: tick.expiration_date(),
 		}
+	}
+
+	pub fn name(&self) -> String {
+		self.name.clone()
+	}
+
+	pub fn symbol(&self) -> String {
+		self.symbol.clone()
 	}
 
 	pub fn bid(&self) -> f64 {

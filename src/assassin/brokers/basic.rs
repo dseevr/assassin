@@ -52,10 +52,9 @@ impl Broker for BasicBroker {
 		self.balance
 	}
 
-	fn quotes_for(&self, symbol: String) -> Vec<Quote> {
-		let quotes: Vec<Quote> = vec![];
-
-		quotes
+	// TODO: this should only return quotes for the desired symbol
+	fn quotes_for(&self, _symbol: String) -> Vec<Quote> {
+		self.quotes.iter().map(|(_, q)| q.clone()).collect()
 	}
 
 	// TODO: positions have a correct cost basis
@@ -70,6 +69,8 @@ impl Broker for BasicBroker {
 			);
 			return false;
 		}
+
+		// TODO: check buying power instead of just cash
 
 		// TODO: move this back to the top if orders get a "filled" status
 		self.orders.push(order.clone());
@@ -124,26 +125,30 @@ impl Broker for BasicBroker {
 			// if day has changed:
 			//   1. close any open positions which are now expired
 			//   2. remove any expired quotes
-			if date != current_date {
+			if date != current_date && ! self.quotes.is_empty() {
 				let mut new_quotes = self.quotes.clone();
 				let mut removed_entry_count = 0;
 				let mut closed_position_count = 0;
 
 				for (key, quote) in &self.quotes {
-					let mut new_positions: HashMap<String, Position> = HashMap::new();
 
-					for (option_name, position) in &self.open_positions {
-						if position.expiration_date() == self.current_date {
-							println!("closing position: {}", position.name());
-							// TODO: close position
-							closed_position_count += 1;
-						} else {
-							let new_position = position.clone();
-							new_positions.insert(option_name.clone(), new_position);
+					// close open positions if necessary
+					if ! self.open_positions.is_empty() {
+						let mut new_positions: HashMap<String, Position> = HashMap::new();
+
+						for (option_name, position) in &self.open_positions {
+							if position.expiration_date() == self.current_date {
+								println!("closing position: {}", position.name());
+								// TODO: close position
+								closed_position_count += 1;
+							} else {
+								let new_position = position.clone();
+								new_positions.insert(option_name.clone(), new_position);
+							}
 						}
-					}
 
-					self.open_positions = new_positions;
+						self.open_positions = new_positions;
+					}
 
 					if quote.expiration_date() == self.current_date {
 						new_quotes.remove(key);
@@ -163,8 +168,10 @@ impl Broker for BasicBroker {
 				);
 
 				self.quotes = new_quotes;
-				self.current_date = tick.date();
 			}
+
+			self.current_date = tick.date();
+
 			Some(tick)
 		} else {
 			None

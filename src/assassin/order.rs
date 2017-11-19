@@ -1,4 +1,4 @@
-use assassin::tick::Tick;
+use assassin::quote::Quote;
 
 extern crate chrono;
 
@@ -6,7 +6,7 @@ use self::chrono::prelude::*;
 
 #[derive(Clone)]
 pub struct Order {
-	tick: Box<Tick>,
+	quote: Box<Quote>,
 	buy: bool,
 	open: bool,
 	quantity: i32,
@@ -15,14 +15,14 @@ pub struct Order {
 
 impl Order {
 	pub fn option_name(&self) -> String {
-		self.tick.name()
+		self.quote.name()
 	}
 
 	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
-		self.tick.expiration_date()
+		self.quote.expiration_date()
 	}
 
-	pub fn new_buy_open_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
+	pub fn new_buy_open_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
 		if quantity <= 0 {
 			panic!("quantity must be > 0 (got {})", quantity);
 		}
@@ -32,7 +32,7 @@ impl Order {
 		}
 
 		Order{
-			tick: tick,
+			quote: Box::new(quote.clone()),
 			buy: true,
 			open: true,
 			quantity: quantity,
@@ -40,22 +40,22 @@ impl Order {
 		}
 	}
 
-	pub fn new_sell_open_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(tick, quantity, limit);
+	pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 
 		o
 	}
 
-	pub fn new_buy_close_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(tick, quantity, limit);
+	pub fn new_buy_close_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.open = false;
 
 		o
 	}
 
-	pub fn new_sell_close_order(tick: Box<Tick>, quantity: i32, limit: f64) -> Order {
-		let mut o = Order::new_buy_open_order(tick, quantity, limit);
+	pub fn new_sell_close_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 		o.open = false;
 
@@ -83,7 +83,7 @@ impl Order {
 	}
 
 	pub fn symbol(&self) -> String {
-		self.tick.symbol().clone()
+		self.quote.symbol().clone()
 	}
 
 	pub fn quantity(&self) -> i32 {

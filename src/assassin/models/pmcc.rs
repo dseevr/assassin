@@ -20,10 +20,16 @@ impl PMCC {
 	}
 
 	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
-		// let o = Order::new_buy_open_order(Box::new(tick.clone()), 10, 2.25);
+		if quotes.is_empty() {
+			return None;
+		}
 
-		// Some(o)
-		None
+		// TODO: logic for picking a quote
+		let quote = quotes[0].clone();
+
+		let o = Order::new_buy_open_order(&quote, 10, 2.25);
+
+		Some(o)
 	}
 
 	fn generate_close_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
