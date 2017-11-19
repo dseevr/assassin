@@ -74,7 +74,7 @@ impl Broker for BasicBroker {
 		// TODO: move this back to the top if orders get a "filled" status
 		self.orders.push(order.clone());
 
-		self.open_positions.entry(order.symbol()).or_insert(Position::new(&order)).apply_order(&order);
+		self.open_positions.entry(order.option_name()).or_insert(Position::new(&order)).apply_order(&order);
 
 		// TODO: delete position if its quantity is now 0
 
@@ -130,7 +130,20 @@ impl Broker for BasicBroker {
 				let mut closed_position_count = 0;
 
 				for (key, quote) in &self.quotes {
-					// TODO: close open positions
+					let mut new_positions: HashMap<String, Position> = HashMap::new();
+
+					for (option_name, position) in &self.open_positions {
+						if position.expiration_date() == self.current_date {
+							println!("closing position: {}", position.name());
+							// TODO: close position
+							closed_position_count += 1;
+						} else {
+							let new_position = position.clone();
+							new_positions.insert(option_name.clone(), new_position);
+						}
+					}
+
+					self.open_positions = new_positions;
 
 					if quote.expiration_date() == self.current_date {
 						new_quotes.remove(key);

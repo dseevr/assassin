@@ -24,11 +24,19 @@ impl Position {
 		}
 	}
 
+	pub fn name(&self) -> String {
+		self.name.clone()
+	}
+
 	pub fn apply_order(&mut self, order: &Order) {
 		self.quantity += order.canonical_quantity()
 	}
 
 	pub fn quantity(&self) -> i32 {
 		self.quantity
+	}
+
+	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+		self.expiration_date
 	}
 }

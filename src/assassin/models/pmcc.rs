@@ -74,6 +74,7 @@ impl Model for PMCC {
 		if self.first_record {
 			self.first_record = false;
 			self.current_date = current_date;
+			return;
 		}
 
 		// still gathering data for the current day
