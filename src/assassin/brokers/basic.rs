@@ -76,14 +76,13 @@ impl Broker for BasicBroker {
 
 			self.current_date = tick.date();
 
-			// force close anything that is expiring and that the model
-			// didn't already close the last trading day.  do this before
-			// we reset the quotes so that the last trading day's quotes
-			// are used when closing positions.
-			self.close_expired_positions();
-
-			// if the day changes, all previous quotes are invalid
 			if day_changed {
+				// force close anything that is expiring and that the model
+				// didn't already close the last trading day.  do this before
+				// we reset the quotes so that the last trading day's quotes
+				// are used when closing positions.
+				self.close_expired_positions();
+
 				self.quotes = HashMap::new();
 			}
 
