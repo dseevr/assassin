@@ -20,6 +20,8 @@ pub struct BasicBroker {
 	// TODO: convert this into a HashMap<String, HashMap<String,Quote>>
 	quotes: HashMap<String, Quote>,
 	current_date: DateTime<FixedOffset>,
+	first_tick: bool,
+	ticks_processed: i64,
 }
 
 impl BasicBroker {
@@ -44,11 +46,93 @@ impl BasicBroker {
 			data_feed: data_feed,
 			quotes: HashMap::new(),
 			current_date: current_date,
+			ticks_processed: 0,
+			first_tick: true,
 		}
 	}
 }
 
 impl Broker for BasicBroker {
+	fn process_simulation_data(&mut self, model: &mut Model) {
+		let mut day_changed;
+
+		// TODO: manually unwrap and consume the first tick here so we don't
+		//       have to check first_tick every single time and it can be
+		//       deleted from the struct
+
+		while let Some(tick) = self.data_feed.next_tick() {
+			day_changed = tick.date() != self.current_date;
+
+			// ----- trading day logic -----------------------------------------
+
+			if self.first_tick {
+				self.first_tick = false;
+			} else if day_changed {
+				// TODO: convert this to a channel send with a timeout
+				model.run_logic(self);
+			}
+
+			// ----- after hours cleanup ---------------------------------------
+
+			self.current_date = tick.date();
+
+			// force close anything that is expiring and that the model
+			// didn't already close the last trading day.  do this before
+			// we reset the quotes so that the last trading day's quotes
+			// are used when closing positions.
+			self.close_expired_positions();
+
+			// if the day changes, all previous quotes are invalid
+			if day_changed {
+				self.quotes = HashMap::new();
+			}
+
+			// ----- next day --------------------------------------------------
+
+			// TODO: maybe check that the ticks are in chronological order here?
+			// TODO: record last_tick time on struct
+
+			// update quote for this option
+			self.quotes.insert(tick.name(), tick.quote());
+
+			self.ticks_processed += 1;
+		}
+
+		self.close_all_positions();
+	}
+
+	fn close_expired_positions(&mut self) {
+		if self.open_positions.is_empty() {
+			return;
+		}
+
+		let mut new_positions: HashMap<String, Position> = HashMap::new();
+
+		// TODO: faster way to walk this vector...
+		//       maybe walk it once, store offsets, then loop over offsets
+		//       and remove from vector (and adjust future offsets by -1)
+
+		for (option_name, position) in &self.open_positions {
+			if position.is_expired(self.current_date) {
+				println!("closing position due to expiration: {}", position.name());
+				// TODO: close position, adjust balance, etc.
+			} else {
+				let new_position = position.clone();
+				new_positions.insert(option_name.clone(), new_position);
+			}
+		}
+
+		self.open_positions = new_positions;
+	}
+
+	fn ticks_processed(&self) -> i64 {
+		self.ticks_processed
+	}
+
+	fn current_date(&self) -> DateTime<FixedOffset> {
+		self.current_date
+	}
+
 	fn account_balance(&self) -> f64 {
 		self.balance
 	}
@@ -108,10 +192,13 @@ impl Broker for BasicBroker {
 		true
 	}
 
+	// TODO: refactor into all_positions() and open_positions()
 	fn open_positions(&self) -> Vec<Position> {
 		let mut positions: Vec<Position> = vec![];
 
 		for (_, value) in &self.open_positions {
+			// TODO: remove this once positions are deleted
+			//       when quantity becomes 0
 			if value.quantity() != 0 {
 				positions.push(value.clone());
 			}
@@ -129,84 +216,7 @@ impl Broker for BasicBroker {
 	}
 
 	fn close_all_positions(&mut self) {
-		// TODO: close all open positions at last price
-	}
-
-	fn next_tick(&mut self) -> Option<Tick> {
-		if let Some(tick) = self.data_feed.next_tick() {
-			self.quotes.insert(tick.name(), tick.quote());
-
-			let date = tick.date().num_days_from_ce();
-			let current_date = self.current_date.num_days_from_ce();
-
-			// if day has changed:
-			//   1. close any open positions which are now expired
-			//   2. remove any expired quotes
-			if date != current_date && ! self.quotes.is_empty() {
-				let mut new_quotes = self.quotes.clone();
-				let mut removed_entry_count = 0;
-				let mut closed_position_count = 0;
-
-				for (key, quote) in &self.quotes {
-
-					// close open positions if necessary
-					if ! self.open_positions.is_empty() {
-						let mut new_positions: HashMap<String, Position> = HashMap::new();
-
-						for (option_name, position) in &self.open_positions {
-							if position.expiration_date() == self.current_date {
-								println!("closing position: {}", position.name());
-								// TODO: close position
-								closed_position_count += 1;
-							} else {
-								let new_position = position.clone();
-								new_positions.insert(option_name.clone(), new_position);
-							}
-						}
-
-						self.open_positions = new_positions;
-					}
-
-					if quote.expiration_date() == self.current_date {
-						new_quotes.remove(key);
-						removed_entry_count += 1;
-					}
-				}
-
-				let mut printed = false;
-
-				if closed_position_count > 0 {
-					println!(
-						"closed {} positions for {}",
-						closed_position_count,
-						self.current_date
-					);
-
-					printed = true;
-				}
-
-				if removed_entry_count > 0 {
-					println!(
-						"purged {} expired entries for {}",
-						removed_entry_count,
-						self.current_date,
-					);
-
-					printed = true;
-				}
-
-				if printed {
-					println!("");
-				}
-
-				self.quotes = new_quotes;
-			}
-
-			self.current_date = tick.date();
-
-			Some(tick)
-		} else {
-			None
-		}
+		println!("TODO: close all open positions at last price");
+		println!("");
 	}
 }

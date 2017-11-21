@@ -3,6 +3,9 @@ use assassin::position::Position;
 use assassin::quote::Quote;
 use assassin::tick::Tick;
 
+extern crate chrono;
+use self::chrono::prelude::*;
+
 pub trait Broker {
 	fn account_balance(&self) -> f64;
 	fn process_order(&mut self, Order) -> bool;
@@ -10,8 +13,11 @@ pub trait Broker {
 	fn total_order_count(&self) -> i32;
 	fn commission_paid(&self) -> f64;
 	fn close_all_positions(&mut self);
-	fn next_tick(&mut self) -> Option<Tick>;
 	fn quotes_for(&self, String) -> Vec<Quote>;
+	fn current_date(&self) -> DateTime<FixedOffset>;
+	fn process_simulation_data(&mut self, &mut Model);
+	fn ticks_processed(&self) -> i64;
+	fn close_expired_positions(&mut self);
 }
 
 pub trait Commission {
@@ -19,6 +25,8 @@ pub trait Commission {
 }
 
 pub trait DataFeed {
+	// TODO: have a way to detect if the data we're parsing
+	//       is incorrectly containing duplicated data for holidays
 	fn next_tick(&mut self) -> Option<Tick>;
 }
 
@@ -26,10 +34,5 @@ pub trait Model {
 	fn name(&self) -> &'static str;
 	fn before_simulation(&mut self, &mut Broker);
 	fn after_simulation(&mut self, &mut Broker);
-
-	// TODO: rename to run_logic()
-	//       broker can wake up the model when it's ready for a decision to be made.
-	//       this could be daily with EOD data or after every tick or 5 seconds, etc.
-	//       when running against realtime data.
-	fn process_tick(&mut self, Tick, &mut Broker);
+	fn run_logic(&mut self, &mut Broker);
 }

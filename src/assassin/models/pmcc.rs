@@ -1,23 +1,16 @@
 use assassin::order::Order;
 use assassin::quote::Quote;
-use assassin::tick::Tick;
 use assassin::traits::*;
 
 extern crate chrono;
 use self::chrono::prelude::*;
 
 pub struct PMCC {
-	first_record: bool,
-	current_date: DateTime<FixedOffset>,
 }
 
 impl PMCC {
 	pub fn new() -> PMCC {
-		PMCC{
-			first_record: true,
-			// this is just so we have a default value
-			current_date: FixedOffset::east(0).ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
-		}
+		PMCC{}
 	}
 
 	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
@@ -35,9 +28,19 @@ impl PMCC {
 		// Some(o)
 		None
 	}
+}
+
+impl Model for PMCC {
+	fn name(&self) -> &'static str {
+		"Poor Man's Covered Call"
+	}
+
+	fn before_simulation(&mut self, _broker: &mut Broker) {}
 
 	fn run_logic(&mut self, broker: &mut Broker) {
-		let day = self.current_date.format("%Y-%m-%d");
+		let current_date = broker.current_date();
+		let day = current_date.format("%Y-%m-%d");
+
 		println!(" ===== start of {} ==================================================", day);
 		println!("");
 
@@ -80,45 +83,15 @@ impl PMCC {
 				"{} - {} contracts - Expires: {} days",
 				position.name(),
 				position.quantity(),
-				position.expiration_date().num_days_from_ce() - self.current_date.num_days_from_ce(),
+				position.expiration_date().num_days_from_ce() - current_date.num_days_from_ce(),
 			);
 		}
 		println!("");
 	}
-}
-
-impl Model for PMCC {
-	fn name(&self) -> &'static str {
-		"Poor Man's Covered Call"
-	}
-
-	fn before_simulation(&mut self, _broker: &mut Broker) {}
-
-	// NOTE: this is a hack to ensure that we only run_logic() once
-	//       per day because we don't have intraday data.
-	fn process_tick(&mut self, tick: Tick, broker: &mut Broker) {
-		let current_date = tick.date();
-
-		if self.first_record {
-			self.first_record = false;
-			self.current_date = current_date;
-			return;
-		}
-
-		// still gathering data for the current day
-		if current_date.num_days_from_ce() == self.current_date.num_days_from_ce() {
-			return;
-		}
-
-		// day has changed, so run normal logic
-		self.run_logic(broker);
-
-		// prepare for the next day
-		self.current_date = current_date;
-	}
 
 	fn after_simulation(&mut self, broker: &mut Broker) {
-		// run again to handle the last day's data
+		// run again to handle the last day's data since
+		// we won't be notified of it by the broker
 		self.run_logic(broker);
 	}
 }

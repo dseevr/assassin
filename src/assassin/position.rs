@@ -39,4 +39,14 @@ impl Position {
 	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
 		self.expiration_date
 	}
+
+	// TODO: add expires_on() and use in Broker.process_order()
+
+	pub fn is_expired(&self, current_date: DateTime<FixedOffset>) -> bool {
+		// < instead of <= because we update the current date in the broker
+		// _before_ calling this function.  if we used <=, it would close
+		// positions which expire on the current trading day before the
+		// model's logic has run.
+		self.expiration_date.num_days_from_ce() < current_date.num_days_from_ce()
+	}
 }

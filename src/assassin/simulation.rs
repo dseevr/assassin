@@ -9,8 +9,6 @@ pub struct Simulation {
 	// TODO: add settings variables (slippage, spread multipliers, etc.)
 	// TODO: add target stats that the model must hit (sharpe, DD, etc.)
 
-	ticks_processed: i64,
-
 	start_time: Instant,
 	starting_balance: f64,
 }
@@ -26,7 +24,6 @@ impl Simulation {
 		Simulation {
 			model: model,
 			broker: broker,
-			ticks_processed: 0,
 			start_time: Instant::now(),
 			starting_balance: starting_balance,
 		}
@@ -35,14 +32,8 @@ impl Simulation {
 	pub fn run(&mut self) {
 		self.model.before_simulation(&mut *self.broker);
 
-		while let Some(tick) = self.broker.next_tick() {
-			// TODO: maybe check that the ticks are in chronological order here?
-			// TODO: how should the broker notify the model that it's ready for
-			//       a buy/sell decision, and how should the model actually apply
-			//       that on the broker without a dependency loop?
-			self.model.process_tick(tick, &mut *self.broker);
-			self.ticks_processed += 1;
-		}
+		// TODO: broker and model should communicate via a channel
+		self.broker.process_simulation_data(&mut *self.model);
 
 		self.model.after_simulation(&mut *self.broker);
 
@@ -74,7 +65,7 @@ impl Simulation {
 		println!("");
 		println!(
 			"Ran simulation ({} ticks) in {:.2} seconds",
-			self.ticks_processed,
+			self.broker.ticks_processed(),
 			self.total_run_time(),
 		);
 		println!("");
