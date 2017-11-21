@@ -44,8 +44,8 @@ impl Order {
 			panic!("quantity must be > 0 (got {})", quantity);
 		}
 
-		if limit <= 0.0 {
-			panic!("limit must be > 0.0 (got {})", limit);
+		if limit < 0.0 {
+			panic!("limit must be >= 0.0 (got {})", limit);
 		}
 
 		Order{

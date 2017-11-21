@@ -24,6 +24,10 @@ impl Position {
 		}
 	}
 
+	pub fn symbol(&self) -> String {
+		self.symbol.clone()
+	}
+
 	pub fn name(&self) -> String {
 		self.name.clone()
 	}
@@ -40,8 +44,20 @@ impl Position {
 		self.expiration_date
 	}
 
+	pub fn is_long(&self) -> bool {
+		self.quantity > 0
+	}
+
+	pub fn is_short(&self) -> bool {
+		! self.is_long()
+	}
+
 	pub fn is_open(&self) -> bool {
 		self.quantity != 0 // can be negative if short
+	}
+
+	pub fn is_closed(&self) -> bool {
+		! self.is_open()
 	}
 
 	// TODO: add expires_on() and use in Broker.process_order()

@@ -14,16 +14,15 @@ impl PMCC {
 	}
 
 	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
-		// TODO: logic for picking a quote
 		let quote = quotes[0].clone();
 
-		let o = Order::new_buy_open_order(&quote, 10, 2.25);
+		let o = Order::new_buy_open_order(&quote, 100, 2.25);
 
 		Some(o)
 	}
 
 	fn generate_close_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
-		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 10, 2.0);
+		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 100, 2.0);
 
 		// Some(o)
 		None
@@ -41,14 +40,14 @@ impl Model for PMCC {
 		let current_date = broker.current_date();
 		let day = current_date.format("%Y-%m-%d");
 
-		println!(" ===== start of {} ==================================================", day);
+		println!("===== start of {} ==================================================", day);
 		println!("");
 
 		let quotes = broker.quotes_for("AAPL".to_string());
 
 		if quotes.is_empty() {
 			println!("no quotes available, skipping day");
-		} else {
+		} else if broker.open_positions().len() < 5 {
 			println!("running buy/sell logic for day ({} quotes available)", quotes.len());
 			println!("");
 
@@ -81,7 +80,7 @@ impl Model for PMCC {
 		for position in broker.open_positions() {
 			println!(
 				"{} - {} contracts - Expires: {} days",
-				position.name(),
+				position.symbol(),
 				position.quantity(),
 				position.expiration_date().num_days_from_ce() - current_date.num_days_from_ce(),
 			);
