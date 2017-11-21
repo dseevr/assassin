@@ -66,6 +66,10 @@ impl Broker for BasicBroker {
 
 		println!("Order received: {}", order.summary());
 
+		// TODO: ensure that days remaining is > 0
+		//       since we only buy at end of day, if there are no days left
+		//       the the contract is _already_ expired.
+
 		let commish = self.commission_schedule.commission_for(&order);
 
 		// ensure enough cash available

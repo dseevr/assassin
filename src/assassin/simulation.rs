@@ -37,6 +37,9 @@ impl Simulation {
 
 		while let Some(tick) = self.broker.next_tick() {
 			// TODO: maybe check that the ticks are in chronological order here?
+			// TODO: how should the broker notify the model that it's ready for
+			//       a buy/sell decision, and how should the model actually apply
+			//       that on the broker without a dependency loop?
 			self.model.process_tick(tick, &mut *self.broker);
 			self.ticks_processed += 1;
 		}

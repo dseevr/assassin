@@ -24,7 +24,12 @@ pub trait DataFeed {
 
 pub trait Model {
 	fn name(&self) -> &'static str;
-	fn process_tick(&mut self, Tick, &mut Broker);
 	fn before_simulation(&mut self, &mut Broker);
 	fn after_simulation(&mut self, &mut Broker);
+
+	// TODO: rename to run_logic()
+	//       broker can wake up the model when it's ready for a decision to be made.
+	//       this could be daily with EOD data or after every tick or 5 seconds, etc.
+	//       when running against realtime data.
+	fn process_tick(&mut self, Tick, &mut Broker);
 }

@@ -73,6 +73,17 @@ impl PMCC {
 			broker.commission_paid(),
 		);
 		println!("");
+
+		println!("Positions:");
+		for position in broker.open_positions() {
+			println!(
+				"{} - {} contracts - Expires: {} days",
+				position.name(),
+				position.quantity(),
+				position.expiration_date().num_days_from_ce() - self.current_date.num_days_from_ce(),
+			);
+		}
+		println!("");
 	}
 }
 
