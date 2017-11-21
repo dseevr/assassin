@@ -12,7 +12,7 @@ use self::chrono::prelude::*;
 
 pub struct BasicBroker {
 	balance: f64,
-	open_positions: HashMap<String, Position>,
+	positions: HashMap<String, Position>,
 	orders: Vec<Order>,
 	commission_schedule: Box<Commission>,
 	commission_paid: f64,
@@ -39,7 +39,7 @@ impl BasicBroker {
 
 		BasicBroker{
 			balance: initial_balance,
-			open_positions: HashMap::new(),
+			positions: HashMap::new(),
 			orders: vec![],
 			commission_schedule: commission_schedule,
 			commission_paid: 0.0,
@@ -102,7 +102,7 @@ impl Broker for BasicBroker {
 	}
 
 	fn close_expired_positions(&mut self) {
-		if self.open_positions.is_empty() {
+		if self.positions.is_empty() {
 			return;
 		}
 
@@ -112,7 +112,7 @@ impl Broker for BasicBroker {
 		//       maybe walk it once, store offsets, then loop over offsets
 		//       and remove from vector (and adjust future offsets by -1)
 
-		for (option_name, position) in &self.open_positions {
+		for (option_name, position) in &self.positions {
 			if position.is_expired(self.current_date) {
 				println!("closing position due to expiration: {}", position.name());
 				// TODO: close position, adjust balance, etc.
@@ -122,7 +122,7 @@ impl Broker for BasicBroker {
 			}
 		}
 
-		self.open_positions = new_positions;
+		self.positions = new_positions;
 	}
 
 	fn ticks_processed(&self) -> i64 {
@@ -172,7 +172,7 @@ impl Broker for BasicBroker {
 		// TODO: move this back to the top if orders get a "filled" status
 		self.orders.push(order.clone());
 
-		self.open_positions.entry(order.option_name()).or_insert(Position::new(&order)).apply_order(&order);
+		self.positions.entry(order.option_name()).or_insert(Position::new(&order)).apply_order(&order);
 
 		// TODO: delete position if its quantity is now 0
 
@@ -192,19 +192,12 @@ impl Broker for BasicBroker {
 		true
 	}
 
-	// TODO: refactor into all_positions() and open_positions()
+	fn positions(&self) -> Vec<Position> {
+		self.positions.iter().map(|(_, p)| p.clone()).collect()
+	}
+
 	fn open_positions(&self) -> Vec<Position> {
-		let mut positions: Vec<Position> = vec![];
-
-		for (_, value) in &self.open_positions {
-			// TODO: remove this once positions are deleted
-			//       when quantity becomes 0
-			if value.quantity() != 0 {
-				positions.push(value.clone());
-			}
-		}
-
-		positions
+		self.positions().into_iter().filter(|p| p.is_open() ).collect()
 	}
 
 	fn total_order_count(&self) -> i32 {

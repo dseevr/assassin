@@ -40,6 +40,10 @@ impl Position {
 		self.expiration_date
 	}
 
+	pub fn is_open(&self) -> bool {
+		self.quantity != 0 // can be negative if short
+	}
+
 	// TODO: add expires_on() and use in Broker.process_order()
 
 	pub fn is_expired(&self, current_date: DateTime<FixedOffset>) -> bool {

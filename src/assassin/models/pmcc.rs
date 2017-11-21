@@ -85,6 +85,7 @@ impl Model for PMCC {
 				position.quantity(),
 				position.expiration_date().num_days_from_ce() - current_date.num_days_from_ce(),
 			);
+			println!("format: {}", position.expiration_date().format("%Y-%m-%d"));
 		}
 		println!("");
 	}
