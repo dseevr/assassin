@@ -60,7 +60,7 @@ impl Simulation {
 		let mut positions = self.broker.positions().clone();
 		positions.sort_by(|a,b| a.name().cmp(&b.name()));
 
-		for pos in positions {
+		for pos in &positions {
 			println!("----- {} -----", pos.name());
 
 			for o in pos.orders() {
@@ -83,16 +83,31 @@ impl Simulation {
 			println!("");
 		}
 
+		let balance_change = balance - self.starting_balance;
 
 		println!("===== RESULTS =====");
 		println!("");
 		println!("Starting balance: ${:.2}", self.starting_balance);
 		println!("Ending balance: ${:.2}", balance);
+		println!("Change: ${:.2}", balance_change);
 
-		let growth = ((balance / self.starting_balance) * 100.0) - 100.0;
+		let capital_growth = ((balance / self.starting_balance) * 100.0) - 100.0;
 
-		println!("Capital growth: {:.2}%", growth);
+		let total_commish: f64 = positions.iter().map(|p| p.commission_paid()).sum();
+
+		let commish_percent_of_profit = if balance_change > 0.0 {
+			(total_commish / balance_change) * 100.0
+		} else {
+			0.0
+		};
+
+		println!("Capital growth: {:.2}%", capital_growth);
 		println!("Total orders: {}", self.broker.total_order_count());
+		println!(
+			"Commission paid: ${:.2} ({:.2}% of profit)",
+			total_commish,
+			commish_percent_of_profit,
+		);
 		println!("");
 
 		let ticks_per_sec = self.broker.ticks_processed() / self.total_run_time() as i64;
