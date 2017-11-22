@@ -7,7 +7,7 @@ use assassin::commission::null::NullCommission;
 // use assassin::commission::charles_schwab::CharlesSchwab;
 
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
-static STARTING_CAPITAL: f64 = 10_000_000.0;
+static STARTING_CAPITAL: f64 = 100_000.0;
 
 fn main() {
 	let feed = DiscountOptionData::new(INPUT_FILE);

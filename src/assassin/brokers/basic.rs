@@ -197,15 +197,19 @@ impl Broker for BasicBroker {
 
 		let commish = self.commission_schedule.commission_for(&order);
 
-		// ensure enough cash available
-		if order.cost_basis() + commish > self.balance {
-			println!(
-				"not enough money (need ${:.2} + ${:.2} commission, have ${:.2})",
-				order.cost_basis(),
-				commish,
-				self.balance
-			);
-			return false;
+		// TODO: only check cash for _buy_ orders
+
+		if order.is_buy() {
+			// ensure enough cash available
+			if order.cost_basis() + commish > self.balance {
+				println!(
+					"not enough money (need ${:.2} + ${:.2} commission, have ${:.2})",
+					order.cost_basis(),
+					commish,
+					self.balance
+				);
+				return false;
+			}
 		}
 
 		// TODO: check buying power instead of just cash

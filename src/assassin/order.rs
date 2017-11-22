@@ -19,6 +19,14 @@ pub struct Order {
 }
 
 impl Order {
+	pub fn is_buy(&self) -> bool {
+		self.buy
+	}
+
+	pub fn is_sell(&self) -> bool {
+		! self.is_buy()
+	}
+
 	pub fn commission(&self) -> f64 {
 		self.commission
 	}

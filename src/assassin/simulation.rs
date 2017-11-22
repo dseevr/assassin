@@ -85,7 +85,7 @@ impl Simulation {
 			println!("");
 
 			println!("Commission paid: ${:.2}", pos.commission_paid());
-			println!("Position value: ${:.2}", "TODO");
+			println!("Position value: ${:.2}", pos.realized_profit());
 			println!("Running total: ${:.2}", running_total);
 			println!("");
 		}
