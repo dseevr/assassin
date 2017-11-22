@@ -19,6 +19,10 @@ pub struct Order {
 }
 
 impl Order {
+	pub fn commission(&self) -> f64 {
+		self.commission
+	}
+
 	pub fn filled_at(&mut self, price: f64, commish: f64) {
 		self.filled = true;
 		self.fill_price = price;

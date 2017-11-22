@@ -28,6 +28,10 @@ impl Position {
 		}
 	}
 
+	pub fn commission_paid(&self) -> f64 {
+		self.orders.iter().fold(0.0, |sum, o| sum + o.commission())
+	}
+
 	pub fn symbol(&self) -> String {
 		self.symbol.clone()
 	}

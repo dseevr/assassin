@@ -82,9 +82,11 @@ impl Simulation {
 					o.fill_price(),
 				);
 			}
-
 			println!("");
-			println!("  Running total: ${:.2}", running_total);
+
+			println!("Commission paid: ${:.2}", pos.commission_paid());
+			println!("Position value: ${:.2}", "TODO");
+			println!("Running total: ${:.2}", running_total);
 			println!("");
 		}
 
