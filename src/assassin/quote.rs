@@ -31,6 +31,10 @@ impl Quote {
 		}
 	}
 
+	pub fn midpoint_price(&self) -> f64 {
+		(self.ask + self.bid) / 2.0
+	}
+
 	pub fn strike_price(&self) -> f64 {
 		self.strike_price
 	}

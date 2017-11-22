@@ -46,18 +46,11 @@ impl Simulation {
 
 	pub fn print_stats(&self) {
 
+		println!("");
+		println!("===============================================================");
+		println!("");
+
 		let balance = self.broker.account_balance();
-
-		println!("===== RESULTS =====");
-		println!("");
-		println!("Starting balance: ${:.2}", self.starting_balance);
-		println!("Ending balance: ${:.2}", balance);
-
-		let growth = ((balance / self.starting_balance) * 100.0) - 100.0;
-
-		println!("Capital growth: {:.2}%", growth);
-		println!("Total orders: {}", self.broker.total_order_count());
-		println!("");
 
 		println!("===== POSITIONS =====");
 		println!("");
@@ -90,9 +83,20 @@ impl Simulation {
 			println!("");
 		}
 
+
+		println!("===== RESULTS =====");
+		println!("");
+		println!("Starting balance: ${:.2}", self.starting_balance);
+		println!("Ending balance: ${:.2}", balance);
+
+		let growth = ((balance / self.starting_balance) * 100.0) - 100.0;
+
+		println!("Capital growth: {:.2}%", growth);
+		println!("Total orders: {}", self.broker.total_order_count());
+		println!("");
+
 		let ticks_per_sec = self.broker.ticks_processed() / self.total_run_time() as i64;
 
-		println!("");
 		println!(
 			"Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
 			self.broker.ticks_processed(),

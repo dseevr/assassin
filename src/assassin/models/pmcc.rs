@@ -16,7 +16,7 @@ impl PMCC {
 	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
 		let quote = quotes[0].clone();
 
-		let o = Order::new_buy_open_order(&quote, 100, 2.25);
+		let o = Order::new_buy_open_order(&quote, 10, quote.midpoint_price());
 
 		println!("buying {}", o.option_name());
 
