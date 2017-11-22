@@ -18,6 +18,8 @@ impl PMCC {
 
 		let o = Order::new_buy_open_order(&quote, 100, 2.25);
 
+		println!("buying {}", o.option_name());
+
 		Some(o)
 	}
 
@@ -43,7 +45,9 @@ impl Model for PMCC {
 		println!("===== start of {} ==================================================", day);
 		println!("");
 
-		let quotes = broker.quotes_for("AAPL".to_string());
+		// TODO: sort this so we get reproducible results
+		let mut quotes = broker.quotes_for("AAPL".to_string());
+		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
 		if quotes.is_empty() {
 			println!("no quotes available, skipping day");

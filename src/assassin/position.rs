@@ -10,6 +10,7 @@ pub struct Position {
 	symbol: String,
 	quantity: i32,
 	expiration_date: DateTime<FixedOffset>,
+	orders: Vec<Order>,
 }
 
 impl Position {
@@ -21,6 +22,9 @@ impl Position {
 			symbol: order.symbol(),
 			quantity: 0,
 			expiration_date: order.expiration_date(),
+			// don't set the order here because it gets applied in
+			// apply_order() below.
+			orders: vec![],
 		}
 	}
 
@@ -32,8 +36,13 @@ impl Position {
 		self.name.clone()
 	}
 
+	pub fn orders(&self) -> Vec<Order> {
+		self.orders.clone()
+	}
+
 	pub fn apply_order(&mut self, order: &Order) {
-		self.quantity += order.canonical_quantity()
+		self.quantity += order.canonical_quantity();
+		self.orders.push(order.clone());
 	}
 
 	pub fn quantity(&self) -> i32 {

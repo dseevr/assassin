@@ -12,9 +12,21 @@ pub struct Order {
 	quantity: i32,
 	limit: f64,
 	strike_price: f64,
+	// date: DateTime<FixedOffset>, // TODO: flesh this out
+	filled: bool,
+	fill_price: f64, // average price
 }
 
 impl Order {
+	pub fn filled_at(&mut self, price: f64) {
+		self.filled = true;
+		self.fill_price = price;
+	}
+
+	pub fn fill_price(&self) -> f64 {
+		self.fill_price
+	}
+
 	pub fn buy_or_sell_string(&self) -> String {
 		if self.buy { "BUY" } else { "SELL" }.to_string()
 	}
@@ -55,6 +67,8 @@ impl Order {
 			quantity: quantity,
 			limit: limit,
 			strike_price: quote.strike_price(),
+			filled: false,
+			fill_price: 0.0,
 		}
 	}
 

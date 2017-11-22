@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use assassin::position::Position;
+
 use assassin::traits::*;
 
 pub struct Simulation {
@@ -51,16 +53,40 @@ impl Simulation {
 		println!("Starting balance: ${:.2}", self.starting_balance);
 		println!("Ending balance: ${:.2}", balance);
 
-		let growth = if self.starting_balance > balance {
-			-((1.0 - (balance / self.starting_balance)) * 100.0)
-		} else if balance > self.starting_balance {
-			1.0 - ((self.starting_balance / balance) * 100.0)
-		} else {
-			0.0 // no orders placed so 0% growth
-		};
+		let growth = ((balance / self.starting_balance) * 100.0) - 100.0;
 
 		println!("Capital growth: {:.2}%", growth);
 		println!("Total orders: {}", self.broker.total_order_count());
+		println!("");
+
+		println!("===== POSITIONS =====");
+		println!("");
+
+		let mut running_total = self.starting_balance;
+
+		let mut positions = self.broker.positions().clone();
+		positions.sort_by(|a,b| a.name().cmp(&b.name()));
+
+		for pos in positions {
+			println!("----- {} -----", pos.name());
+
+			for o in pos.orders() {
+				running_total += o.canonical_cost_basis();
+
+				// BUY 10 contracts @ $15
+				println!(
+					"  {} {} {} contracts @ ${:.2}",
+					o.buy_or_sell_string(),
+					o.quantity(),
+					o.option_name(),
+					o.fill_price(),
+				);
+			}
+
+			println!("");
+			println!("  Running total: ${:.2}", running_total);
+			println!("");
+		}
 
 		println!("");
 		println!(

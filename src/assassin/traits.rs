@@ -20,6 +20,7 @@ pub trait Broker {
 	fn process_simulation_data(&mut self, &mut Model);
 	fn ticks_processed(&self) -> i64;
 	fn close_expired_positions(&mut self);
+	fn orders(&self) -> Vec<Order>;
 }
 
 pub trait Commission {

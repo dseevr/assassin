@@ -50,6 +50,10 @@ impl BasicBroker {
 }
 
 impl Broker for BasicBroker {
+	fn orders(&self) -> Vec<Order> {
+		self.orders.clone()
+	}
+
 	fn process_simulation_data(&mut self, model: &mut Model) {
 		let mut day_changed;
 
@@ -202,16 +206,20 @@ impl Broker for BasicBroker {
 			return false;
 		}
 
+		let filled_order = &mut order.clone();
+
 		// TODO: check buying power instead of just cash
 
-		// TODO: move this back to the top if orders get a "filled" status
-		self.orders.push(order.clone());
+		filled_order.filled_at(order.limit());
 
-		self.positions.entry(order.option_name()).or_insert(Position::new(&order)).apply_order(&order);
+		// TODO: move this back to the top if orders get a "filled" status
+		self.orders.push(filled_order.clone());
+
+		self.positions.entry(filled_order.option_name()).or_insert(Position::new(&filled_order)).apply_order(&filled_order);
 
 		let original_balance = self.balance;
 
-		self.balance += order.canonical_cost_basis();
+		self.balance += filled_order.canonical_cost_basis();
 
 		// apply commission to balance and running total of paid commission
 		// TODO: edge case... commission is not factored into available money before applying order
