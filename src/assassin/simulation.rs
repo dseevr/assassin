@@ -90,11 +90,14 @@ impl Simulation {
 			println!("");
 		}
 
+		let ticks_per_sec = self.broker.ticks_processed() / self.total_run_time() as i64;
+
 		println!("");
 		println!(
-			"Ran simulation ({} ticks) in {:.2} seconds",
+			"Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
 			self.broker.ticks_processed(),
 			self.total_run_time(),
+			ticks_per_sec,
 		);
 		println!("");
 	}
