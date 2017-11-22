@@ -15,12 +15,14 @@ pub struct Order {
 	// date: DateTime<FixedOffset>, // TODO: flesh this out
 	filled: bool,
 	fill_price: f64, // average price
+	commission: f64,
 }
 
 impl Order {
-	pub fn filled_at(&mut self, price: f64) {
+	pub fn filled_at(&mut self, price: f64, commish: f64) {
 		self.filled = true;
 		self.fill_price = price;
+		self.commission = commish
 	}
 
 	pub fn fill_price(&self) -> f64 {
@@ -69,6 +71,7 @@ impl Order {
 			strike_price: quote.strike_price(),
 			filled: false,
 			fill_price: 0.0,
+			commission: 0.0,
 		}
 	}
 

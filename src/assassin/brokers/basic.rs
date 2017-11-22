@@ -193,6 +193,8 @@ impl Broker for BasicBroker {
 		//       since we only buy at end of day, if there are no days left
 		//       the the contract is _already_ expired.
 
+		// TODO: validate that the option_name in the order actually exists
+
 		let commish = self.commission_schedule.commission_for(&order);
 
 		// ensure enough cash available
@@ -206,25 +208,26 @@ impl Broker for BasicBroker {
 			return false;
 		}
 
-		let filled_order = &mut order.clone();
-
 		// TODO: check buying power instead of just cash
 
-		filled_order.filled_at(order.limit());
+		let filled_order = &mut order.clone();
 
-		// TODO: move this back to the top if orders get a "filled" status
+		// fill the order and record it
+		filled_order.filled_at(order.limit(), commish);
 		self.orders.push(filled_order.clone());
 
 		self.positions.entry(filled_order.option_name()).or_insert(Position::new(&filled_order)).apply_order(&filled_order);
 
 		let original_balance = self.balance;
 
-		self.balance += filled_order.canonical_cost_basis();
+		// TODO: put this stuff in an apply_order() function or something
+		{
+			self.balance += filled_order.canonical_cost_basis();
 
-		// apply commission to balance and running total of paid commission
-		// TODO: edge case... commission is not factored into available money before applying order
-		self.balance -= commish;
-		self.commission_paid += commish;
+			// apply commission to balance and running total of paid commission
+			self.balance -= commish;
+			self.commission_paid += commish;
+		}
 
 		println!(
 			"ORDER FILLED. Commission: ${:.2} - Old balance: ${:.2} - New balance: ${:.2}",
