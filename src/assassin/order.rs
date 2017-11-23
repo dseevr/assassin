@@ -130,8 +130,8 @@ impl Order {
 		self.quantity as f64 * self.limit * 100.0 // TODO: assumes 100...
 	}
 
-	pub fn symbol(&self) -> String {
-		self.quote.symbol().clone()
+	pub fn symbol(&self) -> &str {
+		self.quote.symbol()
 	}
 
 	pub fn quantity(&self) -> i32 {

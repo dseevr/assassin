@@ -43,8 +43,8 @@ impl Quote {
 		&self.name
 	}
 
-	pub fn symbol(&self) -> String {
-		self.symbol.clone()
+	pub fn symbol(&self) -> &str {
+		&self.symbol
 	}
 
 	pub fn bid(&self) -> f64 {

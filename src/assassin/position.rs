@@ -19,7 +19,7 @@ impl Position {
 	pub fn new(order: &Order) -> Position {
 		Position{
 			name: order.option_name().to_string(),
-			symbol: order.symbol(),
+			symbol: order.symbol().to_string(),
 			quantity: 0,
 			expiration_date: order.expiration_date(),
 			// don't set the order here because it gets applied in
@@ -49,8 +49,8 @@ impl Position {
 		self.orders.iter().map(|o| o.commission()).sum()
 	}
 
-	pub fn symbol(&self) -> String {
-		self.symbol.clone()
+	pub fn symbol(&self) -> &str {
+		&self.symbol
 	}
 
 	pub fn name(&self) -> &str {
