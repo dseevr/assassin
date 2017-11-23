@@ -11,7 +11,7 @@ use self::chrono::prelude::*;
 #[derive(Clone)]
 pub struct Tick {
 	symbol: String,
-	expiration_date: DateTime<FixedOffset>,
+	expiration_date: DateTime<Utc>,
 	ask: f64,
 	bid: f64,
 	last_price: f64,
@@ -24,7 +24,7 @@ pub struct Tick {
 	vega: f64,
 	open_interest: i32,
 	underlying_price: f64,
-	date: DateTime<FixedOffset>,
+	date: DateTime<Utc>,
 
 	// TODO: bool or type for american vs european
 }
@@ -33,7 +33,7 @@ impl Tick {
 
 	pub fn new(
 		symbol: String,
-		expiration_date: DateTime<FixedOffset>,
+		expiration_date: DateTime<Utc>,
 		ask: f64,
 		bid: f64,
 		last_price: f64,
@@ -46,7 +46,7 @@ impl Tick {
 		vega: f64,
 		open_interest: i32,
 		underlying_price: f64,
-		date: DateTime<FixedOffset>,
+		date: DateTime<Utc>,
 	) -> Tick {
 		Tick{
 			symbol: symbol,
@@ -146,16 +146,16 @@ impl Tick {
 		println!("days left: {}", self.days_until_expiration());
 	}
 
-	pub fn date(&self) -> DateTime<FixedOffset> {
+	pub fn date(&self) -> DateTime<Utc> {
 		self.date
 	}
 
-	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+	pub fn expiration_date(&self) -> DateTime<Utc> {
 		self.expiration_date
 	}
 
-	pub fn symbol(&self) -> String {
-		self.symbol.clone()
+	pub fn symbol(&self) -> &str {
+		&self.symbol
 	}
 
 	pub fn bid(&self) -> f64 {

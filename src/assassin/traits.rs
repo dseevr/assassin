@@ -14,9 +14,9 @@ pub trait Broker {
 	fn total_order_count(&self) -> i32;
 	fn commission_paid(&self) -> f64;
 	fn close_all_positions(&mut self);
-	fn quote_for(&self, String) -> Option<Quote>;
-	fn quotes_for(&self, String) -> Vec<Quote>;
-	fn current_date(&self) -> DateTime<FixedOffset>;
+	fn quote_for(&self, &str) -> Option<Quote>;
+	fn quotes_for(&self, &str) -> Vec<Quote>;
+	fn current_date(&self) -> DateTime<Utc>;
 	fn process_simulation_data(&mut self, &mut Model);
 	fn ticks_processed(&self) -> i64;
 	fn close_expired_positions(&mut self);

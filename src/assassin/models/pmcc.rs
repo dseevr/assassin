@@ -47,7 +47,7 @@ impl Model for PMCC {
 		println!("");
 
 		// TODO: sort this so we get reproducible results
-		let mut quotes = broker.quotes_for("AAPL".to_string());
+		let mut quotes = broker.quotes_for("AAPL");
 		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
 		if quotes.is_empty() {

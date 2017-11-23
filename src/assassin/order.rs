@@ -13,7 +13,7 @@ pub struct Order {
 	quantity: i32,
 	limit: f64,
 	strike_price: f64,
-	// date: DateTime<FixedOffset>, // TODO: flesh this out
+	// date: DateTime<Utc>, // TODO: flesh this out
 	filled: bool,
 	fill_price: f64, // average price
 	commission: f64,
@@ -42,8 +42,8 @@ impl Order {
 		self.fill_price
 	}
 
-	pub fn buy_or_sell_string(&self) -> String {
-		if self.buy { "BUY" } else { "SELL" }.to_string()
+	pub fn buy_or_sell_string(&self) -> &str {
+		if self.buy { "BUY" } else { "SELL" }
 	}
 
 	// "AAPL: BUY 10 CALL $150 STRIKE at LIMIT $2.50"
@@ -58,11 +58,11 @@ impl Order {
 		)
 	}
 
-	pub fn option_name(&self) -> String {
+	pub fn option_name(&self) -> &str {
 		self.quote.name()
 	}
 
-	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+	pub fn expiration_date(&self) -> DateTime<Utc> {
 		self.quote.expiration_date()
 	}
 

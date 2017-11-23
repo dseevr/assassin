@@ -109,13 +109,13 @@ impl Simulation {
 		);
 		println!("");
 
-		let ticks_per_sec = self.broker.ticks_processed() / self.total_run_time() as i64;
+		let ticks_per_sec = self.broker.ticks_processed() as f64 / self.total_run_time();
 
 		println!(
 			"Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
 			add_commas(self.broker.ticks_processed()),
 			self.total_run_time(),
-			add_commas(ticks_per_sec),
+			add_commas(ticks_per_sec as i64),
 		);
 		println!("");
 	}

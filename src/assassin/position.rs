@@ -9,7 +9,7 @@ pub struct Position {
 	name: String,
 	symbol: String,
 	quantity: i32,
-	expiration_date: DateTime<FixedOffset>,
+	expiration_date: DateTime<Utc>,
 	orders: Vec<Order>,
 }
 
@@ -18,7 +18,7 @@ impl Position {
 	//       order is only used to set the name/symbol/expiration date
 	pub fn new(order: &Order) -> Position {
 		Position{
-			name: order.option_name(),
+			name: order.option_name().to_string(),
 			symbol: order.symbol(),
 			quantity: 0,
 			expiration_date: order.expiration_date(),
@@ -53,8 +53,8 @@ impl Position {
 		self.symbol.clone()
 	}
 
-	pub fn name(&self) -> String {
-		self.name.clone()
+	pub fn name(&self) -> &str {
+		&self.name
 	}
 
 	pub fn orders(&self) -> Vec<Order> {
@@ -70,7 +70,7 @@ impl Position {
 		self.quantity
 	}
 
-	pub fn expiration_date(&self) -> DateTime<FixedOffset> {
+	pub fn expiration_date(&self) -> DateTime<Utc> {
 		self.expiration_date
 	}
 
@@ -92,7 +92,7 @@ impl Position {
 
 	// TODO: add expires_on() and use in Broker.process_order()
 
-	pub fn is_expired(&self, current_date: DateTime<FixedOffset>) -> bool {
+	pub fn is_expired(&self, current_date: DateTime<Utc>) -> bool {
 		// < instead of <= because we update the current date in the broker
 		// _before_ calling this function.  if we used <=, it would close
 		// positions which expire on the current trading day before the

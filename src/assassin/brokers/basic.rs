@@ -19,7 +19,7 @@ pub struct BasicBroker {
 	data_feed: Box<DataFeed>,
 	// TODO: convert this into a HashMap<String, HashMap<String,Quote>>
 	quotes: HashMap<String, Quote>,
-	current_date: DateTime<FixedOffset>,
+	current_date: DateTime<Utc>,
 	ticks_processed: i64,
 }
 
@@ -34,7 +34,7 @@ impl BasicBroker {
 		}
 
 		// this is just so we have a default value
-		let current_date = FixedOffset::east(0).ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0);
+		let current_date = Utc::now();
 
 		BasicBroker{
 			balance: initial_balance,
@@ -162,7 +162,7 @@ impl Broker for BasicBroker {
 		self.ticks_processed
 	}
 
-	fn current_date(&self) -> DateTime<FixedOffset> {
+	fn current_date(&self) -> DateTime<Utc> {
 		self.current_date
 	}
 
@@ -170,15 +170,15 @@ impl Broker for BasicBroker {
 		self.balance
 	}
 
-	fn quote_for(&self, option_name: String) -> Option<Quote> {
-		match self.quotes.get(&option_name) {
+	fn quote_for(&self, option_name: &str) -> Option<Quote> {
+		match self.quotes.get(option_name) {
 			Some(q) => Some(q.clone()),
 			None    => None,
 		}
 	}
 
 	// TODO: this should only return quotes for the desired symbol
-	fn quotes_for(&self, _symbol: String) -> Vec<Quote> {
+	fn quotes_for(&self, _symbol: &str) -> Vec<Quote> {
 		self.quotes.iter().map(|(_, q)| q.clone()).collect()
 	}
 
@@ -221,7 +221,10 @@ impl Broker for BasicBroker {
 		filled_order.filled_at(order.limit(), commish);
 		self.orders.push(filled_order.clone());
 
-		self.positions.entry(filled_order.option_name()).or_insert(Position::new(&filled_order)).apply_order(&filled_order);
+		// TODO: replace this .to_string() with &str support
+		let key = filled_order.option_name().to_string();
+
+		self.positions.entry(key).or_insert(Position::new(&filled_order)).apply_order(&filled_order);
 
 		let original_balance = self.balance;
 
