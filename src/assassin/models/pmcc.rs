@@ -53,7 +53,10 @@ impl Model for PMCC {
 		if quotes.is_empty() {
 			println!("no quotes available, skipping day");
 		} else if broker.open_positions().len() < 5 {
-			println!("running buy/sell logic for day ({} quotes available)", quotes.len());
+			println!(
+				"running buy/sell logic for day ({} quotes available)",
+				add_commas(quotes.len()),
+			);
 			println!("");
 
 			// TODO: update any charts, indicators, etc.

@@ -23,7 +23,7 @@ pub fn format_money(f: f64) -> String {
 	format!("{}${}.{:0>2}", sign, final_string, decimal)
 }
 
-pub fn add_commas(input: i64) -> String {
+pub fn add_commas<T: ToString>(input: T) -> String {
 	let num_digits = input.to_string().as_bytes().len();
 
 	let power_of_1000 = num_digits % 3 == 0;
