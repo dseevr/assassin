@@ -12,7 +12,6 @@ use self::chrono::prelude::*;
 
 pub struct DiscountOptionData {
 	enumerator: Lines<BufReader<File>>,
-	parsing_string: String,
 }
 
 impl DiscountOptionData {
@@ -25,13 +24,9 @@ impl DiscountOptionData {
 
 		DiscountOptionData{
 			enumerator: enumerator,
-			parsing_string: "".to_string(),
 		}
 	}
 }
-
-static TIME_TIMEZONE: &'static str = " T12:00:09Z";
-// static CHRONO_FORMAT: &'static str = "%Y-%m-%d %H:%M:%S %z";
 
 //    0         1            2      3        4       5         6        7         8        9           10           11     12    13       14     15             16         17
 // Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
@@ -65,11 +60,10 @@ impl DataFeed for DiscountOptionData {
 
 		let symbol = v[0].parse().unwrap();
 
-		// expiration date
-		self.parsing_string.clear();
-		self.parsing_string.push_str(v[1]);
-		self.parsing_string.push_str(TIME_TIMEZONE);
-		let expiration_date = self.parsing_string.parse::<DateTime<Utc>>().unwrap();
+		let expiration_date = {
+			let date_parts: Vec<u32> = v[1].split('-').map(|p| p.parse().unwrap()).collect();
+			Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2]).and_hms(0, 0, 0)
+		};
 
 		let ask: f64 = v[2].parse().unwrap();
 		let bid: f64 = v[4].parse().unwrap();
@@ -95,10 +89,10 @@ impl DataFeed for DiscountOptionData {
 		let open_interest: i32 = v[15].parse().unwrap();
 		let underlying_price: f64 = v[16].parse().unwrap();
 
-		self.parsing_string.clear();
-		self.parsing_string.push_str(v[17]);
-		self.parsing_string.push_str(TIME_TIMEZONE);
-		let date = self.parsing_string.parse::<DateTime<Utc>>().unwrap();
+		let date = {
+			let date_parts: Vec<u32> = v[17].split('-').map(|p| p.parse().unwrap()).collect();
+			Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2]).and_hms(0, 0, 0)
+		};
 
 		let t = Tick::new(
 			symbol,
