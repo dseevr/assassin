@@ -19,6 +19,7 @@ impl CharlesSchwab {
 // https://www.schwab.com/public/schwab/active_trader/pricing
 impl Commission for CharlesSchwab {
 	fn commission_for(&self, order: &Order) -> f64 {
+		// TODO: use order.fill_price() instead of order.limit() here
 		if order.buy_to_close() && order.limit() <= 0.05 {
 			0.0 // no commission on buy-to-close for <= $0.05
 		} else {

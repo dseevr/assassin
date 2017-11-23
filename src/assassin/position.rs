@@ -1,4 +1,5 @@
 use assassin::order::Order;
+use assassin::quote::Quote;
 
 extern crate chrono;
 
@@ -16,12 +17,12 @@ pub struct Position {
 impl Position {
 	// NOTE: apply_order() still needs to be called afterwards.
 	//       order is only used to set the name/symbol/expiration date
-	pub fn new(order: &Order) -> Position {
+	pub fn new(quote: &Quote) -> Position {
 		Position{
-			name: order.option_name().to_string(),
-			symbol: order.symbol().to_string(),
+			name: quote.name().to_string(),
+			symbol: quote.symbol().to_string(),
 			quantity: 0,
-			expiration_date: order.expiration_date(),
+			expiration_date: quote.expiration_date(),
 			// don't set the order here because it gets applied in
 			// apply_order() below.
 			orders: vec![],

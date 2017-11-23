@@ -137,7 +137,7 @@ impl Broker for BasicBroker {
 				};
 
 				let commish = self.commission_schedule.commission_for(&order);
-				let total = order.canonical_cost_basis() + commish;
+				let total = order.margin_requirement(price) + commish;
 
 				println!(
 					"  {}ing contracts @ {} + {} commission ({} total)",
@@ -188,6 +188,9 @@ impl Broker for BasicBroker {
 
 		// TODO: assign a unique id to each order
 
+		// TODO: exit cleanly instead of exploding?
+		let quote = self.quote_for(order.option_name()).unwrap();
+
 		println!("Order received: {}", order.summary());
 
 		// TODO: ensure that days remaining is > 0
@@ -198,14 +201,16 @@ impl Broker for BasicBroker {
 
 		let commish = self.commission_schedule.commission_for(&order);
 
-		// TODO: only check cash for _buy_ orders
+		// TODO: actually look at the required limit on the order
+		let fill_price = quote.midpoint_price();
+		let required_margin = order.margin_requirement(fill_price);
 
 		if order.is_buy() {
-			// ensure enough cash available
-			if order.cost_basis() + commish > self.balance {
+
+			if required_margin + commish > self.balance {
 				println!(
 					"not enough money (need {} + {} commission, have {})",
-					format_money(order.cost_basis()),
+					format_money(required_margin),
 					format_money(commish),
 					format_money(self.balance),
 				);
@@ -213,29 +218,27 @@ impl Broker for BasicBroker {
 			}
 		}
 
-		// TODO: check buying power instead of just cash
+		// ----- fill the order ------------------------------------------------------
 
 		let filled_order = &mut order.clone();
 
 		// fill the order and record it
-		filled_order.filled_at(order.limit(), commish);
+		filled_order.filled_at(fill_price, commish, &quote);
 		self.orders.push(filled_order.clone());
 
 		// TODO: replace this .to_string() with &str support
 		let key = filled_order.option_name().to_string();
 
-		self.positions.entry(key).or_insert(Position::new(&filled_order)).apply_order(&filled_order);
+		self.positions.entry(key).or_insert(Position::new(&quote)).apply_order(&filled_order);
 
 		let original_balance = self.balance;
 
 		// TODO: put this stuff in an apply_order() function or something
-		{
-			self.balance += filled_order.canonical_cost_basis();
+		self.balance += filled_order.canonical_cost_basis();
 
-			// apply commission to balance and running total of paid commission
-			self.balance -= commish;
-			self.commission_paid += commish;
-		}
+		// apply commission to balance and running total of paid commission
+		self.balance -= commish;
+		self.commission_paid += commish;
 
 		println!(
 			"ORDER FILLED. Commission: {} - Old balance: {} - New balance: {}",
