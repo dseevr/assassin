@@ -12,6 +12,7 @@ use self::chrono::prelude::*;
 pub struct Tick {
 	symbol: String,
 	expiration_date: DateTime<Utc>,
+	formatted_expiration_date: String,
 	ask: f64,
 	bid: f64,
 	last_price: f64,
@@ -51,6 +52,7 @@ impl Tick {
 		Tick{
 			symbol: symbol,
 			expiration_date: expiration_date,
+			formatted_expiration_date: expiration_date.format("%y%m%d").to_string(),
 			ask: ask,
 			bid: bid,
 			last_price: last_price,
@@ -71,14 +73,6 @@ impl Tick {
 		self.strike_price
 	}
 
-	pub fn formatted_date(&self) -> String {
-		self.date.format("%y%m%d").to_string()
-	}
-
-	pub fn formatted_expiration_date(&self) -> String {
-		self.expiration_date.format("%y%m%d").to_string()
-	}
-
 	pub fn quote(&self) -> Quote {
 		Quote::new(&self)
 	}
@@ -86,16 +80,14 @@ impl Tick {
 	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
 	// e.g., CSCO171117C00019000
 	pub fn name(&self) -> String {
-		let date = self.expiration_date.format("%y%m%d").to_string();
-		let option_type = if self.call { "C" } else { "P" }.to_string();
-		let strike = format!("{price:>0width$}0", price = self.strike_price * 100.0, width = 7).to_string();
-
-		let mut output = self.symbol.clone();
-		output.push_str(&date);
-		output.push_str(&option_type);
-		output.push_str(&strike);
-
-		output
+		format!(
+			"{symbol}{date}{t}{price:>0width$}0",
+			symbol = self.symbol,
+			date = self.formatted_expiration_date,
+			t = if self.call { "C" } else { "P" },
+			price = self.strike_price * 100.0,
+			width = 7,
+		)
 	}
 
 	pub fn days_until_expiration(&self) -> i32 {
@@ -107,6 +99,7 @@ impl Tick {
 		(self.ask + self.bid) / 2.0
 	}
 
+	// TODO: move this stuff over to Quote
 	pub fn intrinsic_value(&self) -> f64 {
 		if self.call {
 			if self.underlying_price > self.strike_price {
@@ -123,16 +116,19 @@ impl Tick {
 		}
 	}
 
+	// TODO: move this stuff over to Quote
 	pub fn extrinsic_value(&self) -> f64 {
 		self.midpoint_price() - self.intrinsic_value()
 	}
 
+	// TODO: move this stuff over to Quote
 	pub fn value_ratio(&self) -> f64 {
 		// TODO: if i_value is 0, this is division by 0 and becomes infinity.
 		//       see if we should return an Option<f64> in light of that...
 		(self.extrinsic_value() / self.intrinsic_value()) * 100.0
 	}
 
+	// TODO: move this stuff over to Quote
 	pub fn print_deets(&self) {
 		println!("=======================");
 		println!("name: {}", self.name());
