@@ -1,4 +1,5 @@
 use assassin::quote::Quote;
+use assassin::util::*;
 
 extern crate chrono;
 
@@ -48,12 +49,12 @@ impl Order {
 	// "AAPL: BUY 10 CALL $150 STRIKE at LIMIT $2.50"
 	pub fn summary(&self) -> String {
 		format!(
-			"{} {} {} ${:.2} STRIKE at LIMIT ${:.2}",
+			"{} {} {} {} STRIKE at LIMIT {}",
 			self.symbol(),
 			self.buy_or_sell_string(),
 			self.quantity,
-			self.strike_price,
-			self.limit,
+			format_money(self.strike_price),
+			format_money(self.limit),
 		)
 	}
 

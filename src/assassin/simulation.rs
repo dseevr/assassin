@@ -1,8 +1,7 @@
 use std::time::Instant;
 
-use assassin::position::Position;
-
 use assassin::traits::*;
+use assassin::util::*;
 
 pub struct Simulation {
 	model: Box<Model>,
@@ -68,18 +67,18 @@ impl Simulation {
 
 				// BUY 10 contracts @ $15
 				println!(
-					"  {} {} {} contracts @ ${:.2}",
+					"  {} {} {} contracts @ {}",
 					o.buy_or_sell_string(),
 					o.quantity(),
 					o.option_name(),
-					o.fill_price(),
+					format_money(o.fill_price()),
 				);
 			}
 			println!("");
 
-			println!("Commission paid: ${:.2}", pos.commission_paid());
-			println!("Position value: ${:.2}", pos.realized_profit());
-			println!("Running total: ${:.2}", running_total);
+			println!("Commission paid: {}", format_money(pos.commission_paid()));
+			println!("Position value: {}", format_money(pos.realized_profit()));
+			println!("Running total: {}", format_money(running_total));
 			println!("");
 		}
 
@@ -87,9 +86,9 @@ impl Simulation {
 
 		println!("===== RESULTS =====");
 		println!("");
-		println!("Starting balance: ${:.2}", self.starting_balance);
-		println!("Ending balance: ${:.2}", balance);
-		println!("Change: ${:.2}", balance_change);
+		println!("Starting balance: {}", format_money(self.starting_balance));
+		println!("Ending balance: {}", format_money(balance));
+		println!("Change: {}", format_money(balance_change));
 
 		let capital_growth = ((balance / self.starting_balance) * 100.0) - 100.0;
 
@@ -104,8 +103,8 @@ impl Simulation {
 		println!("Capital growth: {:.2}%", capital_growth);
 		println!("Total orders: {}", self.broker.total_order_count());
 		println!(
-			"Commission paid: ${:.2} ({:.2}% of profit)",
-			total_commish,
+			"Commission paid: {} ({:.2}% of profit)",
+			format_money(total_commish),
 			commish_percent_of_profit,
 		);
 		println!("");
@@ -114,9 +113,9 @@ impl Simulation {
 
 		println!(
 			"Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
-			self.broker.ticks_processed(),
+			add_commas(self.broker.ticks_processed()),
 			self.total_run_time(),
-			ticks_per_sec,
+			add_commas(ticks_per_sec),
 		);
 		println!("");
 	}

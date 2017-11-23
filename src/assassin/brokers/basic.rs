@@ -4,6 +4,7 @@ use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
 use assassin::traits::*;
+use assassin::util::*;
 
 extern crate chrono;
 
@@ -139,11 +140,11 @@ impl Broker for BasicBroker {
 				let total = order.canonical_cost_basis() + commish;
 
 				println!(
-					"  {}ing contracts @ ${:.2} + ${:.2} commission (${:.2} total)",
+					"  {}ing contracts @ {} + {} commission ({} total)",
 					action,
-					price,
-					commish,
-					total,
+					format_money(price),
+					format_money(commish),
+					format_money(total),
 				);
 
 				orders.push(order);
@@ -203,10 +204,10 @@ impl Broker for BasicBroker {
 			// ensure enough cash available
 			if order.cost_basis() + commish > self.balance {
 				println!(
-					"not enough money (need ${:.2} + ${:.2} commission, have ${:.2})",
-					order.cost_basis(),
-					commish,
-					self.balance
+					"not enough money (need {} + {} commission, have {})",
+					format_money(order.cost_basis()),
+					format_money(commish),
+					format_money(self.balance),
 				);
 				return false;
 			}
@@ -234,10 +235,10 @@ impl Broker for BasicBroker {
 		}
 
 		println!(
-			"ORDER FILLED. Commission: ${:.2} - Old balance: ${:.2} - New balance: ${:.2}",
-			commish,
-			original_balance,
-			self.balance,
+			"ORDER FILLED. Commission: {} - Old balance: {} - New balance: {}",
+			format_money(commish),
+			format_money(original_balance),
+			format_money(self.balance),
 		);
 
 		true

@@ -1,6 +1,7 @@
 use assassin::order::Order;
 use assassin::quote::Quote;
 use assassin::traits::*;
+use assassin::util::*;
 
 extern crate chrono;
 use self::chrono::prelude::*;
@@ -72,11 +73,11 @@ impl Model for PMCC {
 		println!(" ----- {} end of day summary -----", day);
 		println!("");
 		println!(
-			"Balance: ${:.2}\npositions open: {}\ntotal orders: {}\ncommish paid: ${:.2}",
-			broker.account_balance(),
+			"Balance: {}\npositions open: {}\ntotal orders: {}\ncommish paid: {}",
+			format_money(broker.account_balance()),
 			broker.open_positions().len(),
 			broker.total_order_count(),
-			broker.commission_paid(),
+			format_money(broker.commission_paid()),
 		);
 		println!("");
 
