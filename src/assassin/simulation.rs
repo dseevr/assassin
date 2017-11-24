@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use assassin::broker::Broker;
 use assassin::traits::*;
 use assassin::util::*;
 

@@ -1,3 +1,4 @@
+use assassin::broker::Broker;
 use assassin::order::Order;
 use assassin::quote::Quote;
 use assassin::traits::*;

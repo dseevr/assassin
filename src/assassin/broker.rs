@@ -10,7 +10,7 @@ extern crate chrono;
 
 use self::chrono::prelude::*;
 
-pub struct BasicBroker {
+pub struct Broker {
 	balance: f64,
 	positions: HashMap<String, Position>,
 	orders: Vec<Order>,
@@ -23,11 +23,11 @@ pub struct BasicBroker {
 	ticks_processed: i64,
 }
 
-impl BasicBroker {
+impl Broker {
 	pub fn new(initial_balance: f64,
 			commission_schedule: Box<Commission>,
 			data_feed: Box<DataFeed>,
-		) -> BasicBroker {
+		) -> Broker {
 
 		if initial_balance <= 0.0 {
 			panic!("balance must be > 0.0 (got {})", initial_balance);
@@ -36,7 +36,7 @@ impl BasicBroker {
 		// this is just so we have a default value
 		let current_date = Utc::now();
 
-		BasicBroker{
+		Broker{
 			balance: initial_balance,
 			positions: HashMap::new(),
 			orders: vec![],
@@ -48,14 +48,12 @@ impl BasicBroker {
 			ticks_processed: 0,
 		}
 	}
-}
 
-impl Broker for BasicBroker {
-	fn orders(&self) -> Vec<Order> {
+	pub fn orders(&self) -> Vec<Order> {
 		self.orders.clone()
 	}
 
-	fn process_simulation_data(&mut self, model: &mut Model) {
+	pub fn process_simulation_data(&mut self, model: &mut Model) {
 		let mut day_changed;
 
 		// manually consume the first tick here so we don't have to check
@@ -158,19 +156,19 @@ impl Broker for BasicBroker {
 		}
 	}
 
-	fn ticks_processed(&self) -> i64 {
+	pub fn ticks_processed(&self) -> i64 {
 		self.ticks_processed
 	}
 
-	fn current_date(&self) -> DateTime<Utc> {
+	pub fn current_date(&self) -> DateTime<Utc> {
 		self.current_date
 	}
 
-	fn account_balance(&self) -> f64 {
+	pub fn account_balance(&self) -> f64 {
 		self.balance
 	}
 
-	fn quote_for(&self, option_name: &str) -> Option<Quote> {
+	pub fn quote_for(&self, option_name: &str) -> Option<Quote> {
 		match self.quotes.get(option_name) {
 			Some(q) => Some(q.clone()),
 			None    => None,
@@ -178,13 +176,13 @@ impl Broker for BasicBroker {
 	}
 
 	// TODO: this should only return quotes for the desired symbol
-	fn quotes_for(&self, _symbol: &str) -> Vec<Quote> {
+	pub fn quotes_for(&self, _symbol: &str) -> Vec<Quote> {
 		self.quotes.iter().map(|(_, q)| q.clone()).collect()
 	}
 
 	// TODO: positions have a correct cost basis
 
-	fn process_order(&mut self, order: Order) -> bool {
+	pub fn process_order(&mut self, order: Order) -> bool {
 
 		// TODO: assign a unique id to each order
 
@@ -250,23 +248,23 @@ impl Broker for BasicBroker {
 		true
 	}
 
-	fn positions(&self) -> Vec<Position> {
+	pub fn positions(&self) -> Vec<Position> {
 		self.positions.iter().map(|(_, p)| p.clone()).collect()
 	}
 
-	fn open_positions(&self) -> Vec<Position> {
+	pub fn open_positions(&self) -> Vec<Position> {
 		self.positions().into_iter().filter(|p| p.is_open() ).collect()
 	}
 
-	fn total_order_count(&self) -> i32 {
+	pub fn total_order_count(&self) -> i32 {
 		self.orders.len() as i32
 	}
 
-	fn commission_paid(&self) -> f64 {
+	pub fn commission_paid(&self) -> f64 {
 		self.commission_paid
 	}
 
-	fn close_all_positions(&mut self) {
+	pub fn close_all_positions(&mut self) {
 		println!("TODO: close all open positions at last price");
 		println!("");
 	}
