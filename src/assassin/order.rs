@@ -1,6 +1,10 @@
 use assassin::quote::Quote;
 use assassin::util::*;
 
+extern crate chrono;
+
+use self::chrono::prelude::*;
+
 #[derive(Clone)]
 pub struct Order {
 	symbol: String,
@@ -12,10 +16,11 @@ pub struct Order {
 	strike_price: f64,
 	// date: DateTime<Utc>, // TODO: flesh this out
 
-	// filled in by the broker when an order is accepted
+	// filled in by the broker when an order is filled
 	quote: Option<Quote>,
 	fill_price: Option<f64>,
 	commission: Option<f64>,
+	filled_date: Option<DateTime<Utc>>, // open date could have been in the past if GTC
 }
 
 impl Order {
@@ -34,10 +39,11 @@ impl Order {
 		}
 	}
 
-	pub fn filled_at(&mut self, price: f64, commish: f64, quote: &Quote) {
+	pub fn filled_at(&mut self, price: f64, commish: f64, quote: &Quote, date: DateTime<Utc>) {
 		self.quote = Some(quote.clone());
 		self.fill_price = Some(price);
 		self.commission = Some(commish);
+		self.filled_date  = Some(date);
 	}
 
 	pub fn fill_price(&self) -> f64 {
@@ -95,6 +101,7 @@ impl Order {
 			fill_price: None,
 			commission: None,
 			quote: None,
+			filled_date: None,
 		}
 	}
 

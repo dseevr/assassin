@@ -136,7 +136,7 @@ impl Broker {
 
 				let commish = self.commission_schedule.commission_for(&order);
 				let mut filled_order = order;
-				filled_order.filled_at(quote.midpoint_price(), commish, &quote);
+				filled_order.filled_at(quote.midpoint_price(), commish, &quote, self.current_date);
 
 				let total = filled_order.margin_requirement(price) + commish;
 
@@ -224,7 +224,7 @@ impl Broker {
 		let mut filled_order = order;
 
 		// fill the order and record it
-		filled_order.filled_at(fill_price, commish, &quote);
+		filled_order.filled_at(fill_price, commish, &quote, self.current_date);
 		self.orders.push(filled_order.clone());
 
 		// TODO: replace this .to_string() with &str support
