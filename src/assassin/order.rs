@@ -1,5 +1,5 @@
+use assassin::money::Money;
 use assassin::quote::Quote;
-use assassin::util::*;
 
 extern crate chrono;
 
@@ -12,14 +12,14 @@ pub struct Order {
 	buy: bool,
 	open: bool,
 	quantity: i32,
-	limit: f32,
-	strike_price: f32,
+	limit: Money,
+	strike_price: Money,
 	// date: DateTime<Utc>, // TODO: flesh this out
 
 	// filled in by the broker when an order is filled
 	quote: Option<Quote>,
-	fill_price: Option<f32>,
-	commission: Option<f32>,
+	fill_price: Option<Money>,
+	commission: Option<Money>,
 	filled_date: Option<DateTime<Utc>>, // open date could have been in the past if GTC
 }
 
@@ -32,21 +32,21 @@ impl Order {
 		! self.is_buy()
 	}
 
-	pub fn commission(&self) -> f32 {
+	pub fn commission(&self) -> Money {
 		match self.commission {
 			Some(c) => c,
 			None => panic!("can't get commission on unfilled order")
 		}
 	}
 
-	pub fn filled_at(&mut self, price: f32, commish: f32, quote: &Quote, date: DateTime<Utc>) {
+	pub fn filled_at(&mut self, price: Money, commish: Money, quote: &Quote, date: DateTime<Utc>) {
 		self.quote = Some(quote.clone());
 		self.fill_price = Some(price);
 		self.commission = Some(commish);
 		self.filled_date  = Some(date);
 	}
 
-	pub fn fill_price(&self) -> f32 {
+	pub fn fill_price(&self) -> Money {
 		match self.fill_price {
 			Some(fp) => fp,
 			None => panic!("can't get fill_price on unfilled order")
@@ -64,8 +64,8 @@ impl Order {
 			self.symbol(),
 			self.buy_or_sell_string(),
 			self.quantity,
-			format_money(self.strike_price),
-			format_money(self.limit),
+			self.strike_price,
+			self.limit,
 		)
 	}
 
@@ -79,12 +79,12 @@ impl Order {
 	// 	self.quote.expiration_date()
 	// }
 
-	pub fn new_buy_open_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
+	pub fn new_buy_open_order(quote: &Quote, quantity: i32, limit: Money) -> Order {
 		if quantity <= 0 {
 			panic!("quantity must be > 0 (got {})", quantity);
 		}
 
-		if limit < 0.0 {
+		if limit < Money::zero() {
 			panic!("limit must be >= 0.0 (got {})", limit);
 		}
 
@@ -105,21 +105,21 @@ impl Order {
 		}
 	}
 
-	pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
+	pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: Money) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 
 		o
 	}
 
-	pub fn new_buy_close_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
+	pub fn new_buy_close_order(quote: &Quote, quantity: i32, limit: Money) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.open = false;
 
 		o
 	}
 
-	pub fn new_sell_close_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
+	pub fn new_sell_close_order(quote: &Quote, quantity: i32, limit: Money) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 		o.open = false;
@@ -143,12 +143,22 @@ impl Order {
 		! self.buy && ! self.open
 	}
 
-	pub fn margin_requirement(&self, price: f32) -> f32 {
-		self.quantity as f32 * price * 100.0
+	pub fn margin_requirement(&self, price: Money) -> Money {
+		let mut res = price;
+
+		res.mul(100); // TODO: Mul
+		res.mul(self.quantity);
+
+		res
 	}
 
-	pub fn cost_basis(&self) -> f32 {
-		self.quantity as f32 * self.fill_price.unwrap() * 100.0
+	// TODO: double check that this is doing the right thing
+	pub fn cost_basis(&self) -> Money {
+		let mut res = self.fill_price.unwrap().clone();
+		res.mul(100);
+		res.mul(self.quantity);
+
+		res
 	}
 
 	pub fn symbol(&self) -> &str {
@@ -159,7 +169,7 @@ impl Order {
 		self.quantity
 	}
 
-	pub fn limit(&self) -> f32 {
+	pub fn limit(&self) -> Money {
 		self.limit
 	}
 
@@ -171,12 +181,10 @@ impl Order {
 		}
 	}
 
-	pub fn canonical_cost_basis(&self) -> f32 {
+	pub fn canonical_cost_basis(&self) -> Money {
 		if self.buy {
-			// debit
-			- self.cost_basis()
+			Money::zero() - self.cost_basis()
 		} else {
-			// credit
 			self.cost_basis()
 		}
 	}

@@ -1,3 +1,4 @@
+use assassin::money::Money;
 use assassin::quote::Quote;
 
 extern crate chrono;
@@ -13,18 +14,18 @@ pub struct Tick {
 	symbol: String,
 	expiration_date: DateTime<Utc>,
 	formatted_expiration_date: String,
-	ask: f32,
-	bid: f32,
-	last_price: f32,
+	ask: Money,
+	bid: Money,
+	last_price: Money,
 	call: bool,
-	strike_price: f32,
+	strike_price: Money,
 	volume: i32,
 	implied_volatility: f32,
 	delta: f32,
 	gamma: f32,
 	vega: f32,
 	open_interest: i32,
-	underlying_price: f32,
+	underlying_price: Money,
 	date: DateTime<Utc>,
 
 	// TODO: bool or type for american vs european
@@ -35,18 +36,18 @@ impl Tick {
 	pub fn new(
 		symbol: String,
 		expiration_date: DateTime<Utc>,
-		ask: f32,
-		bid: f32,
-		last_price: f32,
+		ask: Money,
+		bid: Money,
+		last_price: Money,
 		call: bool,
-		strike_price: f32,
+		strike_price: Money,
 		volume: i32,
 		implied_volatility: f32,
 		delta: f32,
 		gamma: f32,
 		vega: f32,
 		open_interest: i32,
-		underlying_price: f32,
+		underlying_price: Money,
 		date: DateTime<Utc>,
 	) -> Tick {
 		let formatted_expiration_date = {
@@ -77,7 +78,7 @@ impl Tick {
 		}
 	}
 
-	pub fn strike_price(&self) -> f32 {
+	pub fn strike_price(&self) -> Money {
 		self.strike_price
 	}
 
@@ -93,7 +94,8 @@ impl Tick {
 			symbol = self.symbol,
 			date = self.formatted_expiration_date,
 			t = if self.call { "C" } else { "P" },
-			price = self.strike_price * 100.0,
+			// this used to be multiplied by 100 but raw_value() is the same thing
+			price = self.strike_price.raw_value(),
 			width = 7,
 		)
 	}
@@ -103,37 +105,42 @@ impl Tick {
 		self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
 	}
 
-	pub fn midpoint_price(&self) -> f32 {
-		(self.ask + self.bid) / 2.0
+	pub fn midpoint_price(&self) -> Money {
+		let mut res = self.ask + self.bid; // TODO: Mul
+		res.div(2);
+
+		res
 	}
 
 	// TODO: move this stuff over to Quote
-	pub fn intrinsic_value(&self) -> f32 {
+	pub fn intrinsic_value(&self) -> Money {
 		if self.call {
 			if self.underlying_price > self.strike_price {
 				self.underlying_price - self.strike_price
 			} else {
-				0.0
+				Money::zero()
 			}
 		} else {
 			if self.underlying_price < self.strike_price {
 				self.strike_price - self.underlying_price
 			} else {
-				0.0
+				Money::zero()
 			}
 		}
 	}
 
 	// TODO: move this stuff over to Quote
-	pub fn extrinsic_value(&self) -> f32 {
+	pub fn extrinsic_value(&self) -> Money {
 		self.midpoint_price() - self.intrinsic_value()
 	}
 
 	// TODO: move this stuff over to Quote
 	pub fn value_ratio(&self) -> f32 {
 		// TODO: if i_value is 0, this is division by 0 and becomes infinity.
-		//       see if we should return an Option<f32> in light of that...
-		(self.extrinsic_value() / self.intrinsic_value()) * 100.0
+		//       see if we should return an Option<Money> in light of that...
+
+		let res = self.extrinsic_value().raw_value() as f32 / self.intrinsic_value().raw_value() as f32;
+		res / 100.0
 	}
 
 	// TODO: move this stuff over to Quote
@@ -162,11 +169,11 @@ impl Tick {
 		&self.symbol
 	}
 
-	pub fn bid(&self) -> f32 {
+	pub fn bid(&self) -> Money {
 		self.bid
 	}
 
-	pub fn ask(&self) -> f32 {
+	pub fn ask(&self) -> Money {
 		self.ask
 	}
 }

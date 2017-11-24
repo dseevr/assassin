@@ -1,5 +1,6 @@
-use assassin::traits::*;
+use assassin::money::Money;
 use assassin::order::Order;
+use assassin::traits::*;
 
 pub struct NullCommission {}
 
@@ -10,7 +11,7 @@ impl NullCommission {
 }
 
 impl Commission for NullCommission {
-	fn commission_for(&self, _order: &Order) -> f32 {
-		0.0
+	fn commission_for(&self, _order: &Order) -> Money {
+		Money::zero()
 	}
 }

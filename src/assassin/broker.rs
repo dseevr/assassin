@@ -1,8 +1,8 @@
+use assassin::money::Money;
 use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
 use assassin::traits::*;
-use assassin::util::*;
 
 extern crate chrono;
 use self::chrono::prelude::*;
@@ -11,11 +11,11 @@ extern crate fnv;
 use self::fnv::FnvHashMap;
 
 pub struct Broker {
-	balance: f32,
+	balance: Money,
 	positions: FnvHashMap<String, Position>,
 	orders: Vec<Order>,
 	commission_schedule: Box<Commission>,
-	commission_paid: f32,
+	commission_paid: Money,
 	data_feed: Box<DataFeed>,
 	// TODO: convert this into a FnvHashMap<String, FnvHashMap<String,Quote>>
 	quotes: FnvHashMap<String, Quote>,
@@ -25,12 +25,13 @@ pub struct Broker {
 }
 
 impl Broker {
-	pub fn new(initial_balance: f32,
+	pub fn new(
+			initial_balance: Money,
 			commission_schedule: Box<Commission>,
 			data_feed: Box<DataFeed>,
 		) -> Broker {
 
-		if initial_balance <= 0.0 {
+		if initial_balance <= Money::zero() {
 			panic!("balance must be > 0.0 (got {})", initial_balance);
 		}
 
@@ -42,7 +43,7 @@ impl Broker {
 			positions: FnvHashMap::default(),
 			orders: vec![],
 			commission_schedule: commission_schedule,
-			commission_paid: 0.0,
+			commission_paid: Money::zero(),
 			data_feed: data_feed,
 			quotes: FnvHashMap::with_capacity_and_hasher(0, Default::default()),
 			current_date: current_date,
@@ -155,9 +156,9 @@ impl Broker {
 				println!(
 					"  {}ing contracts @ {} + {} commission ({} total)",
 					action,
-					format_money(filled_order.fill_price()),
-					format_money(commish),
-					format_money(total),
+					filled_order.fill_price(),
+					commish,
+					total,
 				);
 
 				orders.push(filled_order);
@@ -179,7 +180,7 @@ impl Broker {
 		self.current_date
 	}
 
-	pub fn account_balance(&self) -> f32 {
+	pub fn account_balance(&self) -> Money {
 		self.balance
 	}
 
@@ -223,9 +224,9 @@ impl Broker {
 			if required_margin + commish > self.balance {
 				println!(
 					"not enough money (need {} + {} commission, have {})",
-					format_money(required_margin),
-					format_money(commish),
-					format_money(self.balance),
+					required_margin,
+					commish,
+					self.balance,
 				);
 				return false;
 			}
@@ -250,17 +251,19 @@ impl Broker {
 		let original_balance = self.balance;
 
 		// TODO: put this stuff in an apply_order() function or something
-		self.balance += filled_order.canonical_cost_basis();
+		// TODO: binary
+		self.balance = self.balance + filled_order.canonical_cost_basis();
 
 		// apply commission to balance and running total of paid commission
-		self.balance -= commish;
-		self.commission_paid += commish;
+		// TODO: binary
+		self.balance = self.balance - commish;
+		self.commission_paid = self.commission_paid + commish;
 
 		println!(
 			"ORDER FILLED. Commission: {} - Old balance: {} - New balance: {}",
-			format_money(commish),
-			format_money(original_balance),
-			format_money(self.balance),
+			commish,
+			original_balance,
+			self.balance,
 		);
 
 		true
@@ -278,7 +281,7 @@ impl Broker {
 		self.orders.len() as i32
 	}
 
-	pub fn commission_paid(&self) -> f32 {
+	pub fn commission_paid(&self) -> Money {
 		self.commission_paid
 	}
 

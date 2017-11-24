@@ -1,8 +1,9 @@
 use std::time::Instant;
 
 use assassin::broker::Broker;
+use assassin::money::Money;
 use assassin::traits::*;
-use assassin::util::*;
+use assassin::util::add_commas;
 
 pub struct Simulation {
 	model: Box<Model>,
@@ -12,7 +13,7 @@ pub struct Simulation {
 	// TODO: add target stats that the model must hit (sharpe, DD, etc.)
 
 	start_time: Instant,
-	starting_balance: f32,
+	starting_balance: Money,
 }
 
 impl Simulation {
@@ -64,7 +65,7 @@ impl Simulation {
 			println!("----- {} -----", pos.name());
 
 			for o in pos.orders() {
-				running_total += o.canonical_cost_basis();
+				running_total = running_total + o.canonical_cost_basis();
 
 				// BUY 10 contracts @ $15
 				println!(
@@ -72,14 +73,14 @@ impl Simulation {
 					o.buy_or_sell_string(),
 					o.quantity(),
 					o.option_name(),
-					format_money(o.fill_price()),
+					o.fill_price(),
 				);
 			}
 			println!("");
 
-			println!("Commission paid: {}", format_money(pos.commission_paid()));
-			println!("Position value: {}", format_money(pos.realized_profit()));
-			println!("Running total: {}", format_money(running_total));
+			println!("Commission paid: {}", pos.commission_paid());
+			println!("Position value: {}", pos.realized_profit());
+			println!("Running total: {}", running_total);
 			println!("");
 		}
 
@@ -87,16 +88,22 @@ impl Simulation {
 
 		println!("===== RESULTS =====");
 		println!("");
-		println!("Starting balance: {}", format_money(self.starting_balance));
-		println!("Ending balance: {}", format_money(balance));
-		println!("Change: {}", format_money(balance_change));
+		println!("Starting balance: {}", self.starting_balance);
+		println!("Ending balance: {}", balance);
+		println!("Change: {}", balance_change);
 
-		let capital_growth = ((balance / self.starting_balance) * 100.0) - 100.0;
+		// TODO: Mul (using .dollars() in the interim)
+		let capital_growth = ((balance.dollars() as f32 / self.starting_balance.dollars() as f32) * 100.0) - 100.0;
 
-		let total_commish: f32 = positions.iter().map(|p| p.commission_paid()).sum();
+		// TODO: Sum
+		// let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();
+		let mut total_commish = Money::zero();
+		for p in &positions {
+			total_commish = total_commish + p.commission_paid()
+		}
 
-		let commish_percent_of_profit = if balance_change > 0.0 {
-			(total_commish / balance_change) * 100.0
+		let commish_percent_of_profit = if balance_change > Money::zero() {
+			(total_commish.raw_value() as f32 / balance_change.raw_value() as f32) * 100.0
 		} else {
 			0.0
 		};
@@ -106,9 +113,12 @@ impl Simulation {
 
 		let average_commission = {
 			if order_count > 0 {
-				total_commish / order_count as f32
+				let mut res = total_commish;
+				res.div(order_count);
+				
+				res
 			} else {
-				0.0
+				Money::zero()
 			}
 		};
 
@@ -116,10 +126,10 @@ impl Simulation {
 		println!("Total orders: {}", order_count);
 		println!(
 			"Commission paid: {} ({:.2}% of profit)",
-			format_money(total_commish),
+			total_commish,
 			commish_percent_of_profit,
 		);
-		println!("Average commission per order: {}", format_money(average_commission));
+		println!("Average commission per order: {}", average_commission);
 		println!("");
 
 		let ticks_per_sec = self.broker.ticks_processed() as f32 / self.total_run_time();

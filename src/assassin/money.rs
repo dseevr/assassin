@@ -2,8 +2,10 @@ use std::fmt;
 use std::ops::{Add, Sub}; //, Mul, Div}; // TODO: <-- implement these
 use std::cmp::{PartialEq, PartialOrd, Ordering};
 
+use assassin::util::add_commas;
+
 #[derive(Copy,Clone)]
-struct Money {
+pub struct Money {
 	cents: i32,
 }
 
@@ -14,12 +16,28 @@ impl Money {
 		}
 	}
 
+	pub fn from_float(f: f32) -> Money {
+		Money{
+			cents: (f * 100.0) as i32
+		}
+	}
+
+	pub fn zero() -> Money {
+		Money{
+			cents: 0,
+		}
+	}
+
 	pub fn dollars(&self) -> i32 {
 		self.cents / 100
 	}
 
 	pub fn cents(&self) -> i32 {
 		self.cents % 100
+	}
+
+	pub fn raw_value(&self) -> i32 {
+		self.cents
 	}
 
 	// TODO: implement Mul and Div and get rid of these
@@ -103,33 +121,6 @@ impl fmt::Display for Money {
 			width = 2
 		)
 	}
-}
-
-pub fn add_commas<T: ToString>(input: T) -> String {
-	// TODO: replace with a loop that divides repeatedly
-	// int digits = 0; while (number != 0) { number /= 10; digits++; }
-	let num_digits = input.to_string().as_bytes().len();
-
-	let power_of_1000 = num_digits % 3 == 0;
-	let mut num_commas = if num_digits > 3 { num_digits / 3 } else { 0 };
-
-	let s = input.to_string();
-	let mut left_offset = if num_commas > 0 { s.len() % 3 as usize } else { 0 };
-	let mut byte_string = s.as_bytes().to_vec();
-
-	if num_commas > 0 {
-		if power_of_1000 {
-			left_offset = 3;
-			num_commas -= 1;
-		}
-
-		for _ in 1..(num_commas+1) {
-			byte_string.insert(left_offset, ",".as_bytes()[0]);
-			left_offset += 3 + 1; // +1 to account for the byte we inserted	
-		}
-	}
-
-	String::from_utf8(byte_string).unwrap()
 }
 
 #[cfg(test)]
@@ -250,8 +241,4 @@ mod tests {
 		test(-111111111, "-$1,111,111.11");
 	}
 }
-
-
-
-
 

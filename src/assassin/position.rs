@@ -1,3 +1,4 @@
+use assassin::money::Money;
 use assassin::order::Order;
 use assassin::quote::Quote;
 
@@ -30,8 +31,8 @@ impl Position {
 	}
 
 	// OPTIMIZE: this can be updated when orders are applied
-	pub fn realized_profit(&self) -> f32 {
-		self.orders.iter().fold(0.0, |sum, o|
+	pub fn realized_profit(&self) -> Money {
+		self.orders.iter().fold(Money::zero(), |sum, o|
 			// NOTE: a buy order really changes the position's value
 			//       by a negative amount because it's tying up capital
 			//       in a debit. a sell order grants a credit and is thus
@@ -41,13 +42,28 @@ impl Position {
 			//       (i.e., a buy is 10, a sell is -10) for quantity, but
 			//       we want to invert this because we want a buy to be
 			//       a debit and a sell to be a credit.
-			sum + -(o.canonical_quantity() as f32 * 100.0 * o.fill_price())
+			{
+				let mut res = o.fill_price(); // TODO: Mul
+				res.mul(100);
+				res.mul(o.canonical_quantity());
+
+				sum - res
+			}
 		)
 	}
 
 	// OPTIMIZE: this can be updated when orders are applied
-	pub fn commission_paid(&self) -> f32 {
-		self.orders.iter().map(|o| o.commission()).sum()
+	pub fn commission_paid(&self) -> Money {
+		// TODO: Sum
+		// self.orders.iter().map(|o| o.commission()).sum()
+
+		let mut res = Money::zero();
+
+		for o in &self.orders {
+			res = res + o.commission();
+		}
+
+		res
 	}
 
 	pub fn symbol(&self) -> &str {

@@ -3,6 +3,7 @@ use std::io::BufRead;
 use std::io::Lines;
 use std::fs::File;
 
+use assassin::money::Money;
 use assassin::tick::Tick;
 use assassin::traits::*;
 
@@ -97,18 +98,18 @@ impl DataFeed for DiscountOptionData {
 		let t = Tick::new(
 			symbol,
 			expiration_date,
-			ask,
-			bid,
-			last_price,
+			Money::from_float(ask),
+			Money::from_float(bid),
+			Money::from_float(last_price),
 			call == "call",
-			strike_price,
+			Money::from_float(strike_price),
 			volume,
 			implied_volatility,
 			delta,
 			gamma,
 			vega,
 			open_interest,
-			underlying_price,
+			Money::from_float(underlying_price),
 			date,
 		);
 

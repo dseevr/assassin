@@ -2,7 +2,7 @@ use assassin::broker::Broker;
 use assassin::order::Order;
 use assassin::quote::Quote;
 use assassin::traits::*;
-use assassin::util::*;
+use assassin::util::add_commas;
 
 extern crate chrono;
 use self::chrono::prelude::*;
@@ -78,10 +78,10 @@ impl Model for PMCC {
 		println!("");
 		println!(
 			"Balance: {}\npositions open: {}\ntotal orders: {}\ncommish paid: {}",
-			format_money(broker.account_balance()),
+			broker.account_balance(),
 			broker.open_positions().len(),
 			broker.total_order_count(),
-			format_money(broker.commission_paid()),
+			broker.commission_paid(),
 		);
 		println!("");
 

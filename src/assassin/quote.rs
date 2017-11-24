@@ -1,3 +1,4 @@
+use assassin::money::Money;
 use assassin::tick::Tick;
 
 extern crate chrono;
@@ -8,9 +9,9 @@ use self::chrono::prelude::*;
 pub struct Quote {
 	name: String,
 	symbol: String,
-	bid: f32,
-	ask: f32,
-	strike_price: f32,
+	bid: Money,
+	ask: Money,
+	strike_price: Money,
 	expiration_date: DateTime<Utc>,
 	// TODO: depth, etc. if available
 }
@@ -31,11 +32,14 @@ impl Quote {
 		}
 	}
 
-	pub fn midpoint_price(&self) -> f32 {
-		(self.ask + self.bid) / 2.0
+	pub fn midpoint_price(&self) -> Money {
+		let mut res = self.ask + self.bid; // TODO: Mul
+		res.div(2);
+
+		res
 	}
 
-	pub fn strike_price(&self) -> f32 {
+	pub fn strike_price(&self) -> Money {
 		self.strike_price
 	}
 
@@ -47,11 +51,11 @@ impl Quote {
 		&self.symbol
 	}
 
-	pub fn bid(&self) -> f32 {
+	pub fn bid(&self) -> Money {
 		self.bid
 	}
 
-	pub fn ask(&self) -> f32 {
+	pub fn ask(&self) -> Money {
 		self.ask
 	}
 
