@@ -5,3 +5,4 @@ authors = ["Bill Robinson <dseevr@users.noreply.github.com>"]
 
 [dependencies]
 chrono = "0.4"
+fnv = "1.0.6"

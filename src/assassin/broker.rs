@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
@@ -7,21 +5,26 @@ use assassin::traits::*;
 use assassin::util::*;
 
 extern crate chrono;
-
 use self::chrono::prelude::*;
+
+extern crate fnv;
+use self::fnv::FnvHashMap;
 
 pub struct Broker {
 	balance: f64,
-	positions: HashMap<String, Position>,
+	positions: FnvHashMap<String, Position>,
 	orders: Vec<Order>,
 	commission_schedule: Box<Commission>,
 	commission_paid: f64,
 	data_feed: Box<DataFeed>,
-	// TODO: convert this into a HashMap<String, HashMap<String,Quote>>
-	quotes: HashMap<String, Quote>,
+	// TODO: convert this into a FnvHashMap<String, FnvHashMap<String,Quote>>
+	quotes: FnvHashMap<String, Quote>,
 	current_date: DateTime<Utc>,
 	ticks_processed: i64,
 }
+
+// TODO: have this be automatically updated if the # of quotes changes
+const MAP_CAPACITY: usize = 3000;
 
 impl Broker {
 	pub fn new(initial_balance: f64,
@@ -38,12 +41,12 @@ impl Broker {
 
 		Broker{
 			balance: initial_balance,
-			positions: HashMap::new(),
+			positions: FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default()),
 			orders: vec![],
 			commission_schedule: commission_schedule,
 			commission_paid: 0.0,
 			data_feed: data_feed,
-			quotes: HashMap::new(),
+			quotes: FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default()),
 			current_date: current_date,
 			ticks_processed: 0,
 		}
@@ -86,7 +89,7 @@ impl Broker {
 				// are used when closing positions.
 				self.close_expired_positions();
 
-				self.quotes = HashMap::new();
+				self.quotes = FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default());
 			}
 
 			// ----- next day --------------------------------------------------
