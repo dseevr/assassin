@@ -42,17 +42,7 @@ impl DataFeed for DiscountOptionData {
 			return None;
 		}
 
-		let res = e.unwrap();
-
-		if res.is_err() {
-			panic!("bad result: {}", res.err().unwrap());
-		}
-
-		if ! res.is_ok() {
-			println!("we are not okay!");
-		}
-
-		let l = res.unwrap();
+		let l = e.unwrap().unwrap();
 
 		// ----- split CSV and parse fields -------------------------------
 
