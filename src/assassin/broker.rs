@@ -120,7 +120,7 @@ impl Broker {
 				let action;
 				let price;
 
-				// TODO: something better than filling at the worst possible price?
+				// TODO: call OrderFiller's logic here
 
 				let order = if position.is_long() {
 					action = "sell";
@@ -135,17 +135,20 @@ impl Broker {
 				};
 
 				let commish = self.commission_schedule.commission_for(&order);
-				let total = order.margin_requirement(price) + commish;
+				let mut filled_order = order;
+				filled_order.filled_at(quote.midpoint_price(), commish, &quote);
+
+				let total = filled_order.margin_requirement(price) + commish;
 
 				println!(
 					"  {}ing contracts @ {} + {} commission ({} total)",
 					action,
-					format_money(price),
+					format_money(filled_order.fill_price()),
 					format_money(commish),
 					format_money(total),
 				);
 
-				orders.push(order);
+				orders.push(filled_order);
 			}
 		}
 
@@ -218,7 +221,7 @@ impl Broker {
 
 		// ----- fill the order ------------------------------------------------------
 
-		let filled_order = &mut order.clone();
+		let mut filled_order = order;
 
 		// fill the order and record it
 		filled_order.filled_at(fill_price, commish, &quote);
