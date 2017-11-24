@@ -21,10 +21,8 @@ pub struct Broker {
 	quotes: FnvHashMap<String, Quote>,
 	current_date: DateTime<Utc>,
 	ticks_processed: i64,
+	quote_map_capacity: usize,
 }
-
-// TODO: have this be automatically updated if the # of quotes changes
-const MAP_CAPACITY: usize = 3000;
 
 impl Broker {
 	pub fn new(initial_balance: f64,
@@ -41,14 +39,15 @@ impl Broker {
 
 		Broker{
 			balance: initial_balance,
-			positions: FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default()),
+			positions: FnvHashMap::default(),
 			orders: vec![],
 			commission_schedule: commission_schedule,
 			commission_paid: 0.0,
 			data_feed: data_feed,
-			quotes: FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default()),
+			quotes: FnvHashMap::with_capacity_and_hasher(0, Default::default()),
 			current_date: current_date,
 			ticks_processed: 0,
+			quote_map_capacity: 0,
 		}
 	}
 
@@ -89,7 +88,16 @@ impl Broker {
 				// are used when closing positions.
 				self.close_expired_positions();
 
-				self.quotes = FnvHashMap::with_capacity_and_hasher(MAP_CAPACITY, Default::default());
+				let key_count = self.quotes.keys().len();
+
+				if key_count > self.quote_map_capacity {
+					self.quote_map_capacity = key_count;
+				}
+
+				self.quotes = FnvHashMap::with_capacity_and_hasher(
+					self.quote_map_capacity,
+					Default::default()
+				);
 			}
 
 			// ----- next day --------------------------------------------------
