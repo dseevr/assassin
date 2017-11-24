@@ -22,10 +22,7 @@ impl Commission for CharlesSchwab {
 		if order.buy_to_close() && order.fill_price() <= Money::new(5) {
 			Money::zero() // no commission on buy-to-close for <= $0.05
 		} else {
-			let mut per_contract = self.per_contract; // TODO: Mul
-			per_contract.mul(order.quantity());
-
-			self.base_fee + per_contract
+			self.base_fee + self.per_contract * order.quantity()
 		}
 	}
 }

@@ -42,13 +42,7 @@ impl Position {
 			//       (i.e., a buy is 10, a sell is -10) for quantity, but
 			//       we want to invert this because we want a buy to be
 			//       a debit and a sell to be a credit.
-			{
-				let mut res = o.fill_price(); // TODO: Mul
-				res.mul(100);
-				res.mul(o.canonical_quantity());
-
-				sum - res
-			}
+			sum - (o.fill_price() * 100 * o.canonical_quantity())
 		)
 	}
 

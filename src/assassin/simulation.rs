@@ -92,8 +92,7 @@ impl Simulation {
 		println!("Ending balance: {}", balance);
 		println!("Change: {}", balance_change);
 
-		// TODO: Mul (using .dollars() in the interim)
-		let capital_growth = ((balance.dollars() as f32 / self.starting_balance.dollars() as f32) * 100.0) - 100.0;
+		let capital_growth = ((balance.raw_value() as f32 / self.starting_balance.raw_value() as f32) * 100.0) - 100.0;
 
 		// TODO: Sum
 		// let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();
@@ -113,10 +112,7 @@ impl Simulation {
 
 		let average_commission = {
 			if order_count > 0 {
-				let mut res = total_commish;
-				res.div(order_count);
-				
-				res
+				total_commish / order_count
 			} else {
 				Money::zero()
 			}

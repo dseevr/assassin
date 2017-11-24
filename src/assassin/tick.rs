@@ -106,10 +106,7 @@ impl Tick {
 	}
 
 	pub fn midpoint_price(&self) -> Money {
-		let mut res = self.ask + self.bid; // TODO: Mul
-		res.div(2);
-
-		res
+		(self.ask + self.bid) / 2
 	}
 
 	// TODO: move this stuff over to Quote

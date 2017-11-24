@@ -1,5 +1,6 @@
 use std::fmt;
-use std::ops::{Add, Sub}; //, Mul, Div}; // TODO: <-- implement these
+use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
 use std::cmp::{PartialEq, PartialOrd, Ordering};
 
 use assassin::util::add_commas;
@@ -39,15 +40,6 @@ impl Money {
 	pub fn raw_value(&self) -> i32 {
 		self.cents
 	}
-
-	// TODO: implement Mul and Div and get rid of these
-	pub fn mul(&mut self, i: i32) {
-		self.cents *= i;
-	}
-
-	pub fn div(&mut self, i: i32) {
-		self.cents /= i;
-	}
 }
 
 impl Add for Money {
@@ -67,6 +59,53 @@ impl Sub for Money {
 		Money{
 			cents: self.cents - rhs.cents,
 		}
+	}
+}
+
+impl Mul<i32> for Money {
+	type Output = Money;
+
+	fn mul(self, rhs: i32) -> Money {
+		Money{
+			cents: self.cents * rhs,
+		}
+	}
+}
+
+impl Div<i32> for Money {
+	type Output = Money;
+
+	fn div(self, rhs: i32) -> Money {
+		let cents = (self.cents as f32 / rhs as f32).round() as i32;
+
+		Money{
+			cents: cents,
+		}
+	}
+}
+
+impl AddAssign for Money {
+	fn add_assign(&mut self, rhs: Money) {
+		self.cents = self.cents + rhs.cents;
+	}
+}
+
+impl SubAssign for Money {
+	fn sub_assign(&mut self, rhs: Money) {
+		self.cents = self.cents - rhs.cents;
+	}
+}
+
+impl MulAssign<i32> for Money {
+	fn mul_assign(&mut self, rhs: i32) {
+		self.cents *= rhs;
+	}
+}
+
+impl DivAssign<i32> for Money {
+	fn div_assign(&mut self, rhs: i32) {
+		// round up to nearest cent when dividing
+		self.cents = (self.cents as f32 / rhs as f32).round() as i32;
 	}
 }
 
@@ -162,7 +201,7 @@ mod tests {
 	#[test]
 	fn test_mul() {
 		let mut m = Money::new(110);
-		m.mul(5);
+		m = m * 5;
 
 		assert!(m.dollars() == 5);
 		assert!(m.cents() == 50);
@@ -170,11 +209,47 @@ mod tests {
 
 	#[test]
 	fn test_div() {
-		let mut m = Money::new(550);
-		m.div(5);
+		let mut m = Money::new(199);
+		m = m / 5;
+
+		assert!(m.dollars() == 0);
+		assert!(m.cents() == 40);
+	}
+
+	#[test]
+	fn test_add_assign() {
+		let mut m = Money::new(110);
+		m += Money::new(10);
 
 		assert!(m.dollars() == 1);
-		assert!(m.cents() == 10);
+		assert!(m.cents() == 20);
+	}
+
+	#[test]
+	fn test_sub_assign() {
+		let mut m = Money::new(110);
+		m -= Money::new(5);
+
+		assert!(m.dollars() == 1);
+		assert!(m.cents() == 5);
+	}
+
+	#[test]
+	fn test_mul_assign() {
+		let mut m = Money::new(110);
+		m *= 5;
+
+		assert!(m.dollars() == 5);
+		assert!(m.cents() == 50);
+	}
+
+	#[test]
+	fn test_div_assign() {
+		let mut m = Money::new(199);
+		m /= 5;
+
+		assert!(m.dollars() == 0);
+		assert!(m.cents() == 40);
 	}
 
 	#[test]
@@ -241,4 +316,3 @@ mod tests {
 		test(-111111111, "-$1,111,111.11");
 	}
 }
-

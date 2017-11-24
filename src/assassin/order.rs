@@ -144,21 +144,12 @@ impl Order {
 	}
 
 	pub fn margin_requirement(&self, price: Money) -> Money {
-		let mut res = price;
-
-		res.mul(100); // TODO: Mul
-		res.mul(self.quantity);
-
-		res
+		price * 100 * self.quantity
 	}
 
 	// TODO: double check that this is doing the right thing
 	pub fn cost_basis(&self) -> Money {
-		let mut res = self.fill_price.unwrap();
-		res.mul(100);
-		res.mul(self.quantity);
-
-		res
+		self.fill_price.unwrap() * 100 * self.quantity
 	}
 
 	pub fn symbol(&self) -> &str {
