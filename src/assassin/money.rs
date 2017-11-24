@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, Sub, Mul, Div};
 
 struct Money {
@@ -17,6 +18,10 @@ impl Money {
 
 	pub fn cents(&self) -> i32 {
 		self.cents % 100
+	}
+
+	pub fn mul(&mut self, i: i32) {
+		self.cents *= i;
 	}
 }
 
@@ -38,6 +43,48 @@ impl Sub for Money {
 			cents: self.cents - rhs.cents,
 		}
 	}
+}
+
+impl fmt::Display for Money {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		let sign = if self.cents < 0 { "-" } else { "" };
+
+		write!(
+			f,
+			"{}${}.{cents:>0width$}",
+			sign,
+			add_commas(self.dollars().abs()),
+			cents = self.cents().abs(),
+			width = 2
+		)
+	}
+}
+
+pub fn add_commas<T: ToString>(input: T) -> String {
+	// TODO: replace with a loop that divides repeatedly
+	// int digits = 0; while (number != 0) { number /= 10; digits++; }
+	let num_digits = input.to_string().as_bytes().len();
+
+	let power_of_1000 = num_digits % 3 == 0;
+	let mut num_commas = if num_digits > 3 { num_digits / 3 } else { 0 };
+
+	let s = input.to_string();
+	let mut left_offset = if num_commas > 0 { s.len() % 3 as usize } else { 0 };
+	let mut byte_string = s.as_bytes().to_vec();
+
+	if num_commas > 0 {
+		if power_of_1000 {
+			left_offset = 3;
+			num_commas -= 1;
+		}
+
+		for _ in 1..(num_commas+1) {
+			byte_string.insert(left_offset, ",".as_bytes()[0]);
+			left_offset += 3 + 1; // +1 to account for the byte we inserted	
+		}
+	}
+
+	String::from_utf8(byte_string).unwrap()
 }
 
 #[cfg(test)]
@@ -76,46 +123,44 @@ mod tests {
 		assert!(m3.cents() == 95);
 	}
 
-	// #[test]
-	// fn add_should_work() {
+	#[test]
+	fn test_display() {
+		fn test(cents: i32, s: &str) {
+			let res = format!("{}", Money::new(cents));
 
-	// 	// normal
-	// 	let mut p1 = Price::new(1, 0);
-	// 	let p2 = Price::new(1, 10);
+			println!("Expected: {}", s);
+			println!("Got: {}", res);
 
-	// 	p1.add(&p2);
+			assert!(res == s);
+		}
 
-	// 	assert!(p1.dollars == 2);
-	// 	assert!(p1.cents == 10);
+		println!("");
 
-	// 	// carried value
-	// 	let mut p3 = Price::new(1, 99);
-	// 	let p4 = Price::new(0, 1);
+		test(0, "$0.00");
+		test(1, "$0.01");
+		test(11, "$0.11");
+		test(111, "$1.11");
+		test(1111, "$11.11");
+		test(11111, "$111.11");
+		test(111111, "$1,111.11");
+		test(1111111, "$11,111.11");
+		test(11111111, "$111,111.11");
+		test(111111111, "$1,111,111.11");
 
-	// 	p3.add(&p4);
-
-	// 	assert!(p3.dollars == 2);
-	// 	assert!(p3.cents == 0);
-	// }
-
-	// fn subtract_should_work() {
-
-	// 	// normal
-	// 	let mut p5 = Price::new(1, 99);
-	// 	let p6 = Price::new(0, 45);
-
-	// 	p5.subtract(&p6);
-
-	// 	assert!(p5.dollars == 0);
-	// 	assert!(p5.cents == 44);
-
-	// 	// carried value
-	// 	let mut p5 = Price::new(1, 15);
-	// 	let p6 = Price::new(1, 16);
-
-	// 	p5.subtract(&p6);
-
-	// 	assert!(p5.dollars == -1);
-	// 	assert!(p5.cents == 99);
-	// }
+		test(-0, "$0.00");
+		test(-1, "-$0.01");
+		test(-11, "-$0.11");
+		test(-111, "-$1.11");
+		test(-1111, "-$11.11");
+		test(-11111, "-$111.11");
+		test(-111111, "-$1,111.11");
+		test(-1111111, "-$11,111.11");
+		test(-11111111, "-$111,111.11");
+		test(-111111111, "-$1,111,111.11");
+	}
 }
+
+
+
+
+
