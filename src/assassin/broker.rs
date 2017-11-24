@@ -51,9 +51,10 @@ impl Broker {
 		}
 	}
 
-	pub fn orders(&self) -> Vec<Order> {
-		self.orders.clone()
-	}
+	// TODO: is this needed?
+	// pub fn orders(&self) -> Vec<Order> {
+	// 	self.orders.clone()
+	// }
 
 	pub fn process_simulation_data(&mut self, model: &mut Model) {
 		let mut day_changed;
@@ -236,7 +237,10 @@ impl Broker {
 
 		// fill the order and record it
 		filled_order.filled_at(fill_price, commish, &quote, self.current_date);
-		self.orders.push(filled_order.clone());
+
+		// TODO: do we even need to store orders on the broker?
+		//       we currently only iterate over them as part of a position.
+		// self.orders.push(filled_order.clone());
 
 		// TODO: replace this .to_string() with &str support
 		let key = filled_order.option_name().to_string();

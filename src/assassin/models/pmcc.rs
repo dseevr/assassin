@@ -25,7 +25,7 @@ impl PMCC {
 		Some(o)
 	}
 
-	fn generate_close_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
+	fn generate_close_order(&self, _quotes: &Vec<Quote>) -> Option<Order> {
 		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 100, 2.0);
 
 		// Some(o)
