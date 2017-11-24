@@ -49,10 +49,18 @@ impl Tick {
 		underlying_price: f64,
 		date: DateTime<Utc>,
 	) -> Tick {
+		let formatted_expiration_date = {
+			let year = expiration_date.year();
+			let month = expiration_date.month();
+			let day = expiration_date.day();
+
+			format!("{}{}{}", year, month, day)
+		};
+
 		Tick{
 			symbol: symbol,
 			expiration_date: expiration_date,
-			formatted_expiration_date: expiration_date.format("%y%m%d").to_string(),
+			formatted_expiration_date: formatted_expiration_date,
 			ask: ask,
 			bid: bid,
 			last_price: last_price,
