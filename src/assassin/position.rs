@@ -62,6 +62,10 @@ impl Position {
 		self.orders.clone()
 	}
 
+	pub fn order_count(&self) -> i32 {
+		self.orders.len() as i32
+	}
+
 	pub fn apply_order(&mut self, order: &Order) {
 		self.quantity += order.canonical_quantity();
 		self.orders.push(order.clone());

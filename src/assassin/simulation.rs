@@ -101,13 +101,25 @@ impl Simulation {
 			0.0
 		};
 
+		let order_counts: Vec<i32> = positions.iter().map(|p| p.order_count()).collect();
+		let order_count: i32 = order_counts.iter().sum();
+
+		let average_commission = {
+			if order_count > 0 {
+				total_commish / order_count as f32
+			} else {
+				0.0
+			}
+		};
+
 		println!("Capital growth: {:.2}%", capital_growth);
-		println!("Total orders: {}", self.broker.total_order_count());
+		println!("Total orders: {}", order_count);
 		println!(
 			"Commission paid: {} ({:.2}% of profit)",
 			format_money(total_commish),
 			commish_percent_of_profit,
 		);
+		println!("Average commission per order: {}", format_money(average_commission));
 		println!("");
 
 		let ticks_per_sec = self.broker.ticks_processed() as f32 / self.total_run_time();
