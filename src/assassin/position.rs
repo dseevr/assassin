@@ -74,8 +74,8 @@ impl Position {
 		&self.name
 	}
 
-	pub fn orders(&self) -> Vec<Order> {
-		self.orders.clone()
+	pub fn orders(&self) -> &Vec<Order> {
+		&self.orders
 	}
 
 	pub fn order_count(&self) -> i32 {

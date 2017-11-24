@@ -154,7 +154,7 @@ impl Order {
 
 	// TODO: double check that this is doing the right thing
 	pub fn cost_basis(&self) -> Money {
-		let mut res = self.fill_price.unwrap().clone();
+		let mut res = self.fill_price.unwrap();
 		res.mul(100);
 		res.mul(self.quantity);
 
