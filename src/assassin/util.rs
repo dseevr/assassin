@@ -1,4 +1,4 @@
-pub fn format_money(f: f64) -> String {
+pub fn format_money(f: f32) -> String {
 	if f >= 1_000_000_000.0 {
 		panic!("number is too big");
 	}
@@ -11,7 +11,7 @@ pub fn format_money(f: f64) -> String {
 	let abs_f = f.abs();
 	let i = f.abs() as i64;
 
-	let mantissa = abs_f - (abs_f as i64) as f64;
+	let mantissa = abs_f - (abs_f as i64) as f32;
 	let decimal = (mantissa * 100.0).round() as i64;
 
 	let weird_edge_case = ! positive && decimal == 0 && f >= -0.005;
@@ -75,7 +75,7 @@ mod tests {
 		assert!(add_commas(1_000_000_000) == "1,000,000,000")
 	}
 
-	fn test(f: f64, s: &str) {
+	fn test(f: f32, s: &str) {
 		let result = format_money(f);
 
 		println!("Checking format_money({})", f);

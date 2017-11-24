@@ -12,14 +12,14 @@ pub struct Order {
 	buy: bool,
 	open: bool,
 	quantity: i32,
-	limit: f64,
-	strike_price: f64,
+	limit: f32,
+	strike_price: f32,
 	// date: DateTime<Utc>, // TODO: flesh this out
 
 	// filled in by the broker when an order is filled
 	quote: Option<Quote>,
-	fill_price: Option<f64>,
-	commission: Option<f64>,
+	fill_price: Option<f32>,
+	commission: Option<f32>,
 	filled_date: Option<DateTime<Utc>>, // open date could have been in the past if GTC
 }
 
@@ -32,21 +32,21 @@ impl Order {
 		! self.is_buy()
 	}
 
-	pub fn commission(&self) -> f64 {
+	pub fn commission(&self) -> f32 {
 		match self.commission {
 			Some(c) => c,
 			None => panic!("can't get commission on unfilled order")
 		}
 	}
 
-	pub fn filled_at(&mut self, price: f64, commish: f64, quote: &Quote, date: DateTime<Utc>) {
+	pub fn filled_at(&mut self, price: f32, commish: f32, quote: &Quote, date: DateTime<Utc>) {
 		self.quote = Some(quote.clone());
 		self.fill_price = Some(price);
 		self.commission = Some(commish);
 		self.filled_date  = Some(date);
 	}
 
-	pub fn fill_price(&self) -> f64 {
+	pub fn fill_price(&self) -> f32 {
 		match self.fill_price {
 			Some(fp) => fp,
 			None => panic!("can't get fill_price on unfilled order")
@@ -79,7 +79,7 @@ impl Order {
 	// 	self.quote.expiration_date()
 	// }
 
-	pub fn new_buy_open_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+	pub fn new_buy_open_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
 		if quantity <= 0 {
 			panic!("quantity must be > 0 (got {})", quantity);
 		}
@@ -105,21 +105,21 @@ impl Order {
 		}
 	}
 
-	pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+	pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 
 		o
 	}
 
-	pub fn new_buy_close_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+	pub fn new_buy_close_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.open = false;
 
 		o
 	}
 
-	pub fn new_sell_close_order(quote: &Quote, quantity: i32, limit: f64) -> Order {
+	pub fn new_sell_close_order(quote: &Quote, quantity: i32, limit: f32) -> Order {
 		let mut o = Order::new_buy_open_order(quote, quantity, limit);
 		o.buy = false;
 		o.open = false;
@@ -143,12 +143,12 @@ impl Order {
 		! self.buy && ! self.open
 	}
 
-	pub fn margin_requirement(&self, price: f64) -> f64 {
-		self.quantity as f64 * price * 100.0
+	pub fn margin_requirement(&self, price: f32) -> f32 {
+		self.quantity as f32 * price * 100.0
 	}
 
-	pub fn cost_basis(&self) -> f64 {
-		self.quantity as f64 * self.fill_price.unwrap() * 100.0
+	pub fn cost_basis(&self) -> f32 {
+		self.quantity as f32 * self.fill_price.unwrap() * 100.0
 	}
 
 	pub fn symbol(&self) -> &str {
@@ -159,7 +159,7 @@ impl Order {
 		self.quantity
 	}
 
-	pub fn limit(&self) -> f64 {
+	pub fn limit(&self) -> f32 {
 		self.limit
 	}
 
@@ -171,7 +171,7 @@ impl Order {
 		}
 	}
 
-	pub fn canonical_cost_basis(&self) -> f64 {
+	pub fn canonical_cost_basis(&self) -> f32 {
 		if self.buy {
 			// debit
 			- self.cost_basis()

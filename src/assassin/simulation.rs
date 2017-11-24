@@ -12,7 +12,7 @@ pub struct Simulation {
 	// TODO: add target stats that the model must hit (sharpe, DD, etc.)
 
 	start_time: Instant,
-	starting_balance: f64,
+	starting_balance: f32,
 }
 
 impl Simulation {
@@ -93,7 +93,7 @@ impl Simulation {
 
 		let capital_growth = ((balance / self.starting_balance) * 100.0) - 100.0;
 
-		let total_commish: f64 = positions.iter().map(|p| p.commission_paid()).sum();
+		let total_commish: f32 = positions.iter().map(|p| p.commission_paid()).sum();
 
 		let commish_percent_of_profit = if balance_change > 0.0 {
 			(total_commish / balance_change) * 100.0
@@ -110,7 +110,7 @@ impl Simulation {
 		);
 		println!("");
 
-		let ticks_per_sec = self.broker.ticks_processed() as f64 / self.total_run_time();
+		let ticks_per_sec = self.broker.ticks_processed() as f32 / self.total_run_time();
 
 		println!(
 			"Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
@@ -121,9 +121,9 @@ impl Simulation {
 		println!("");
 	}
 
-	pub fn total_run_time(&self) -> f64 {
-		let seconds = self.start_time.elapsed().as_secs() as f64;
-		let nanoseconds = self.start_time.elapsed().subsec_nanos() as f64 * 1e-9;
+	pub fn total_run_time(&self) -> f32 {
+		let seconds = self.start_time.elapsed().as_secs() as f32;
+		let nanoseconds = self.start_time.elapsed().subsec_nanos() as f32 * 1e-9;
 
 		seconds + nanoseconds
 	}

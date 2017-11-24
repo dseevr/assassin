@@ -11,11 +11,11 @@ extern crate fnv;
 use self::fnv::FnvHashMap;
 
 pub struct Broker {
-	balance: f64,
+	balance: f32,
 	positions: FnvHashMap<String, Position>,
 	orders: Vec<Order>,
 	commission_schedule: Box<Commission>,
-	commission_paid: f64,
+	commission_paid: f32,
 	data_feed: Box<DataFeed>,
 	// TODO: convert this into a FnvHashMap<String, FnvHashMap<String,Quote>>
 	quotes: FnvHashMap<String, Quote>,
@@ -25,7 +25,7 @@ pub struct Broker {
 }
 
 impl Broker {
-	pub fn new(initial_balance: f64,
+	pub fn new(initial_balance: f32,
 			commission_schedule: Box<Commission>,
 			data_feed: Box<DataFeed>,
 		) -> Broker {
@@ -179,7 +179,7 @@ impl Broker {
 		self.current_date
 	}
 
-	pub fn account_balance(&self) -> f64 {
+	pub fn account_balance(&self) -> f32 {
 		self.balance
 	}
 
@@ -278,7 +278,7 @@ impl Broker {
 		self.orders.len() as i32
 	}
 
-	pub fn commission_paid(&self) -> f64 {
+	pub fn commission_paid(&self) -> f32 {
 		self.commission_paid
 	}
 

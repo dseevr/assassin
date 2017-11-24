@@ -30,7 +30,7 @@ impl Position {
 	}
 
 	// OPTIMIZE: this can be updated when orders are applied
-	pub fn realized_profit(&self) -> f64 {
+	pub fn realized_profit(&self) -> f32 {
 		self.orders.iter().fold(0.0, |sum, o|
 			// NOTE: a buy order really changes the position's value
 			//       by a negative amount because it's tying up capital
@@ -41,12 +41,12 @@ impl Position {
 			//       (i.e., a buy is 10, a sell is -10) for quantity, but
 			//       we want to invert this because we want a buy to be
 			//       a debit and a sell to be a credit.
-			sum + -(o.canonical_quantity() as f64 * 100.0 * o.fill_price())
+			sum + -(o.canonical_quantity() as f32 * 100.0 * o.fill_price())
 		)
 	}
 
 	// OPTIMIZE: this can be updated when orders are applied
-	pub fn commission_paid(&self) -> f64 {
+	pub fn commission_paid(&self) -> f32 {
 		self.orders.iter().map(|o| o.commission()).sum()
 	}
 

@@ -8,9 +8,9 @@ use self::chrono::prelude::*;
 pub struct Quote {
 	name: String,
 	symbol: String,
-	bid: f64,
-	ask: f64,
-	strike_price: f64,
+	bid: f32,
+	ask: f32,
+	strike_price: f32,
 	expiration_date: DateTime<Utc>,
 	// TODO: depth, etc. if available
 }
@@ -31,11 +31,11 @@ impl Quote {
 		}
 	}
 
-	pub fn midpoint_price(&self) -> f64 {
+	pub fn midpoint_price(&self) -> f32 {
 		(self.ask + self.bid) / 2.0
 	}
 
-	pub fn strike_price(&self) -> f64 {
+	pub fn strike_price(&self) -> f32 {
 		self.strike_price
 	}
 
@@ -47,11 +47,11 @@ impl Quote {
 		&self.symbol
 	}
 
-	pub fn bid(&self) -> f64 {
+	pub fn bid(&self) -> f32 {
 		self.bid
 	}
 
-	pub fn ask(&self) -> f64 {
+	pub fn ask(&self) -> f32 {
 		self.ask
 	}
 

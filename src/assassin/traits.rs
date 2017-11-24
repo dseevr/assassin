@@ -3,7 +3,7 @@ use assassin::order::Order;
 use assassin::tick::Tick;
 
 pub trait Commission {
-	fn commission_for(&self, &Order) -> f64;
+	fn commission_for(&self, &Order) -> f32;
 }
 
 pub trait DataFeed {

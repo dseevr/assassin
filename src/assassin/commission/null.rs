@@ -10,7 +10,7 @@ impl NullCommission {
 }
 
 impl Commission for NullCommission {
-	fn commission_for(&self, _order: &Order) -> f64 {
+	fn commission_for(&self, _order: &Order) -> f32 {
 		0.0
 	}
 }

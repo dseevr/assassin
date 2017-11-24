@@ -13,18 +13,18 @@ pub struct Tick {
 	symbol: String,
 	expiration_date: DateTime<Utc>,
 	formatted_expiration_date: String,
-	ask: f64,
-	bid: f64,
-	last_price: f64,
+	ask: f32,
+	bid: f32,
+	last_price: f32,
 	call: bool,
-	strike_price: f64,
+	strike_price: f32,
 	volume: i32,
-	implied_volatility: f64,
-	delta: f64,
-	gamma: f64,
-	vega: f64,
+	implied_volatility: f32,
+	delta: f32,
+	gamma: f32,
+	vega: f32,
 	open_interest: i32,
-	underlying_price: f64,
+	underlying_price: f32,
 	date: DateTime<Utc>,
 
 	// TODO: bool or type for american vs european
@@ -35,18 +35,18 @@ impl Tick {
 	pub fn new(
 		symbol: String,
 		expiration_date: DateTime<Utc>,
-		ask: f64,
-		bid: f64,
-		last_price: f64,
+		ask: f32,
+		bid: f32,
+		last_price: f32,
 		call: bool,
-		strike_price: f64,
+		strike_price: f32,
 		volume: i32,
-		implied_volatility: f64,
-		delta: f64,
-		gamma: f64,
-		vega: f64,
+		implied_volatility: f32,
+		delta: f32,
+		gamma: f32,
+		vega: f32,
 		open_interest: i32,
-		underlying_price: f64,
+		underlying_price: f32,
 		date: DateTime<Utc>,
 	) -> Tick {
 		let formatted_expiration_date = {
@@ -77,7 +77,7 @@ impl Tick {
 		}
 	}
 
-	pub fn strike_price(&self) -> f64 {
+	pub fn strike_price(&self) -> f32 {
 		self.strike_price
 	}
 
@@ -103,12 +103,12 @@ impl Tick {
 		self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
 	}
 
-	pub fn midpoint_price(&self) -> f64 {
+	pub fn midpoint_price(&self) -> f32 {
 		(self.ask + self.bid) / 2.0
 	}
 
 	// TODO: move this stuff over to Quote
-	pub fn intrinsic_value(&self) -> f64 {
+	pub fn intrinsic_value(&self) -> f32 {
 		if self.call {
 			if self.underlying_price > self.strike_price {
 				self.underlying_price - self.strike_price
@@ -125,14 +125,14 @@ impl Tick {
 	}
 
 	// TODO: move this stuff over to Quote
-	pub fn extrinsic_value(&self) -> f64 {
+	pub fn extrinsic_value(&self) -> f32 {
 		self.midpoint_price() - self.intrinsic_value()
 	}
 
 	// TODO: move this stuff over to Quote
-	pub fn value_ratio(&self) -> f64 {
+	pub fn value_ratio(&self) -> f32 {
 		// TODO: if i_value is 0, this is division by 0 and becomes infinity.
-		//       see if we should return an Option<f64> in light of that...
+		//       see if we should return an Option<f32> in light of that...
 		(self.extrinsic_value() / self.intrinsic_value()) * 100.0
 	}
 
@@ -162,11 +162,11 @@ impl Tick {
 		&self.symbol
 	}
 
-	pub fn bid(&self) -> f64 {
+	pub fn bid(&self) -> f32 {
 		self.bid
 	}
 
-	pub fn ask(&self) -> f64 {
+	pub fn ask(&self) -> f32 {
 		self.ask
 	}
 }
