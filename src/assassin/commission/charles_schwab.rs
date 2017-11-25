@@ -1,6 +1,6 @@
 use assassin::money::Money;
-use assassin::traits::*;
 use assassin::order::Order;
+use assassin::traits::*;
 
 pub struct CharlesSchwab {
 	base_fee: Money,
@@ -10,8 +10,8 @@ pub struct CharlesSchwab {
 impl CharlesSchwab {
 	pub fn new() -> CharlesSchwab {
 		CharlesSchwab{
-			base_fee: Money::new(4_95),
-			per_contract: Money::new(65)
+			base_fee: Money::new(4, 95),
+			per_contract: Money::new(0, 65)
 		}
 	}
 }
@@ -19,7 +19,7 @@ impl CharlesSchwab {
 // https://www.schwab.com/public/schwab/active_trader/pricing
 impl Commission for CharlesSchwab {
 	fn commission_for(&self, order: &Order) -> Money {
-		if order.buy_to_close() && order.fill_price() <= Money::new(5) {
+		if order.buy_to_close() && order.fill_price() <= Money::new(0, 5) {
 			Money::zero() // no commission on buy-to-close for <= $0.05
 		} else {
 			self.base_fee + self.per_contract * order.quantity()

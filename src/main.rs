@@ -10,7 +10,7 @@ use assassin::commission::charles_schwab::CharlesSchwab;
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 
 fn main() {
-	let starting_capital = Money::new(100_000__00);
+	let starting_capital = Money::new(100_000, 0);
 	let feed = DiscountOptionData::new(INPUT_FILE);
 	let test_model = PMCC::new();
 

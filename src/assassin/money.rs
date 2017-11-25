@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::{Add, Sub, Mul, Div};
 use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
+use std::iter::{Iterator, Sum};
 use std::cmp::{PartialEq, PartialOrd, Ordering};
 
 use assassin::util::add_commas;
@@ -11,15 +12,29 @@ pub struct Money {
 }
 
 impl Money {
-	pub fn new(cents: i32) -> Money {
-		Money {
+	pub fn new(dollars: i32, cents: i32) -> Money {
+		if cents < 0 || cents > 99 {
+			panic!("cents must be >= 0 and <= 99")
+		}
+
+		let value = if dollars < 0 {
+			dollars * 100 - cents
+		} else {
+			dollars * 100 + cents
+		};
+
+		Money::from_cents(value)
+	}
+
+	pub fn from_cents(cents: i32) -> Money {
+		Money{
 			cents: cents,
 		}
 	}
 
 	pub fn from_float(f: f32) -> Money {
 		Money{
-			cents: (f * 100.0) as i32
+			cents: (f * 100.0).round() as i32
 		}
 	}
 
@@ -119,6 +134,12 @@ impl PartialEq for Money {
 	}
 }
 
+impl Sum for Money {
+	fn sum<I>(iter: I) -> Money where I: Iterator<Item=Money> {
+		iter.fold(Money::zero(), Add::add)
+	}
+}
+
 impl PartialOrd for Money {
 	fn partial_cmp(&self, rhs: &Money) -> Option<Ordering> {
 		if self < rhs {
@@ -167,19 +188,27 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn test_constructors() {
+		let m1 = Money::new(1, 23);
+		let m2 = Money::from_cents(1_23);
+
+		assert!(m1 == m2);
+	}
+
+	#[test]
 	fn test_dollars() {
-		assert!(Money::new(1223).dollars() == 12);
+		assert!(Money::new(12, 23).dollars() == 12);
 	}
 
 	#[test]
 	fn test_cents() {
-		assert!(Money::new(1223).cents() == 23);
+		assert!(Money::new(12, 23).cents() == 23);
 	}
 
 	#[test]
 	fn test_add() {
-		let m1 = Money::new(99);
-		let m2 = Money::new(115);
+		let m1 = Money::new(0, 99);
+		let m2 = Money::new(1, 15);
 
 		let m3 = m1 + m2;
 
@@ -189,8 +218,8 @@ mod tests {
 
 	#[test]
 	fn test_sub() {
-		let m1 = Money::new(115);
-		let m2 = Money::new(20);
+		let m1 = Money::new(1, 15);
+		let m2 = Money::new(0, 20);
 
 		let m3 = m1 - m2;
 
@@ -200,7 +229,7 @@ mod tests {
 
 	#[test]
 	fn test_mul() {
-		let mut m = Money::new(110);
+		let mut m = Money::new(1, 10);
 		m = m * 5;
 
 		assert!(m.dollars() == 5);
@@ -209,7 +238,7 @@ mod tests {
 
 	#[test]
 	fn test_div() {
-		let mut m = Money::new(199);
+		let mut m = Money::new(1, 99);
 		m = m / 5;
 
 		assert!(m.dollars() == 0);
@@ -218,8 +247,8 @@ mod tests {
 
 	#[test]
 	fn test_add_assign() {
-		let mut m = Money::new(110);
-		m += Money::new(10);
+		let mut m = Money::new(1, 10);
+		m += Money::new(0, 10);
 
 		assert!(m.dollars() == 1);
 		assert!(m.cents() == 20);
@@ -227,8 +256,8 @@ mod tests {
 
 	#[test]
 	fn test_sub_assign() {
-		let mut m = Money::new(110);
-		m -= Money::new(5);
+		let mut m = Money::new(1, 10);
+		m -= Money::new(0, 5);
 
 		assert!(m.dollars() == 1);
 		assert!(m.cents() == 5);
@@ -236,7 +265,7 @@ mod tests {
 
 	#[test]
 	fn test_mul_assign() {
-		let mut m = Money::new(110);
+		let mut m = Money::new(1, 10);
 		m *= 5;
 
 		assert!(m.dollars() == 5);
@@ -245,7 +274,7 @@ mod tests {
 
 	#[test]
 	fn test_div_assign() {
-		let mut m = Money::new(199);
+		let mut m = Money::new(1, 99);
 		m /= 5;
 
 		assert!(m.dollars() == 0);
@@ -253,10 +282,21 @@ mod tests {
 	}
 
 	#[test]
+	fn test_sum() {
+		let m1 = Money::new(0, 10);
+		let m2 = Money::new(0, 5);
+
+		let ms = vec![m1, m2];
+		let sum: Money = ms.iter().cloned().sum();
+
+		assert!(sum == m1 + m2);
+	}
+
+	#[test]
 	fn test_equality() {
-		let m1 = Money::new(115);
-		let m2 = Money::new(115);
-		let m3 = Money::new(116);
+		let m1 = Money::new(1, 15);
+		let m2 = Money::new(1, 15);
+		let m3 = Money::new(1, 16);
 
 		assert!(m1 == m2);
 		assert!(m1 != m3);
@@ -264,9 +304,9 @@ mod tests {
 
 	#[test]
 	fn test_ordering() {
-		let large = Money::new(1050);
-		let same = Money::new(1050);
-		let small = Money::new(25);
+		let large = Money::new(10, 50);
+		let same  = Money::new(10, 50);
+		let small = Money::new(0, 25);
 
 		assert_eq!(small.partial_cmp(&large), Some(Ordering::Less));
 		assert_eq!(large.partial_cmp(&small), Some(Ordering::Greater));
@@ -283,7 +323,7 @@ mod tests {
 	#[test]
 	fn test_display() {
 		fn test(cents: i32, s: &str) {
-			let res = format!("{}", Money::new(cents));
+			let res = format!("{}", Money::from_cents(cents));
 
 			println!("Expected: {}", s);
 			println!("Got: {}", res);
@@ -293,26 +333,28 @@ mod tests {
 
 		println!("");
 
-		test(0, "$0.00");
-		test(1, "$0.01");
-		test(11, "$0.11");
-		test(111, "$1.11");
-		test(1111, "$11.11");
-		test(11111, "$111.11");
-		test(111111, "$1,111.11");
-		test(1111111, "$11,111.11");
-		test(11111111, "$111,111.11");
-		test(111111111, "$1,111,111.11");
+		test(0,          "$0.00");
+		test(1,          "$0.01");
+		test(11,         "$0.11");
+		test(111,        "$1.11");
+		test(1111,       "$11.11");
+		test(11111,      "$111.11");
+		test(111111,     "$1,111.11");
+		test(1111111,    "$11,111.11");
+		test(11111111,   "$111,111.11");
+		test(111111111,  "$1,111,111.11");
+		test(1111111111, "$11,111,111.11");
 
-		test(-0, "$0.00");
-		test(-1, "-$0.01");
-		test(-11, "-$0.11");
-		test(-111, "-$1.11");
-		test(-1111, "-$11.11");
-		test(-11111, "-$111.11");
-		test(-111111, "-$1,111.11");
-		test(-1111111, "-$11,111.11");
-		test(-11111111, "-$111,111.11");
-		test(-111111111, "-$1,111,111.11");
+		test(-0,          "$0.00");
+		test(-1,          "-$0.01");
+		test(-11,         "-$0.11");
+		test(-111,        "-$1.11");
+		test(-1111,       "-$11.11");
+		test(-11111,      "-$111.11");
+		test(-111111,     "-$1,111.11");
+		test(-1111111,    "-$11,111.11");
+		test(-11111111,   "-$111,111.11");
+		test(-111111111,  "-$1,111,111.11");
+		test(-1111111111, "-$11,111,111.11");
 	}
 }
