@@ -295,11 +295,11 @@ impl Broker {
 		true
 	}
 
-	pub fn positions(&self) -> Vec<Position> {
-		self.positions.iter().map(|(_, p)| p.clone()).collect()
+	pub fn positions(&self) -> Vec<&Position> {
+		self.positions.iter().map(|(_, p)| p).collect()
 	}
 
-	pub fn open_positions(&self) -> Vec<Position> {
+	pub fn open_positions(&self) -> Vec<&Position> {
 		self.positions().into_iter().filter(|p| p.is_open() ).collect()
 	}
 
