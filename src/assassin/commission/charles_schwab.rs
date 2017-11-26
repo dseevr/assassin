@@ -2,7 +2,7 @@ use assassin::order::Order;
 use assassin::traits::*;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 
 pub struct CharlesSchwab {
 	base_fee: Money,

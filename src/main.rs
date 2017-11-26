@@ -7,7 +7,7 @@ use assassin::broker::Broker;
 use assassin::commission::charles_schwab::CharlesSchwab;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 

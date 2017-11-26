@@ -5,7 +5,7 @@ extern crate chrono;
 use self::chrono::prelude::*;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Position {

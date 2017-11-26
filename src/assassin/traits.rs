@@ -3,7 +3,7 @@ use assassin::order::Order;
 use assassin::tick::Tick;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 
 pub trait Commission {
 	fn commission_for(&self, &Order) -> Money;

@@ -10,7 +10,7 @@ extern crate fnv;
 use self::fnv::FnvHashMap;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 
 pub struct Broker {
 	balance: Money,

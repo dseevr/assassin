@@ -4,7 +4,7 @@ use assassin::broker::Broker;
 use assassin::traits::*;
 
 extern crate greenback;
-use greenback::greenback::Greenback as Money;
+use greenback::Greenback as Money;
 use greenback::util::add_commas;
 
 pub struct Simulation {
