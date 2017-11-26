@@ -1,9 +1,11 @@
 use std::time::Instant;
 
 use assassin::broker::Broker;
-use assassin::money::Money;
 use assassin::traits::*;
-use assassin::util::add_commas;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
+use greenback::util::add_commas;
 
 pub struct Simulation {
 	model: Box<Model>,

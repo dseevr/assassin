@@ -3,13 +3,14 @@ use std::io::BufRead;
 use std::io::Lines;
 use std::fs::File;
 
-use assassin::money::Money;
 use assassin::tick::Tick;
 use assassin::traits::*;
 
 extern crate chrono;
-
 use self::chrono::prelude::*;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
 
 pub struct DiscountOptionData {
 	enumerator: Lines<BufReader<File>>,

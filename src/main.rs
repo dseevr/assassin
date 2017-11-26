@@ -1,11 +1,13 @@
 mod assassin;
-use assassin::money::Money;
 use assassin::simulation::Simulation;
 use assassin::feeds::discount_option_data::DiscountOptionData;
 use assassin::models::pmcc::PMCC;
 use assassin::broker::Broker;
 // use assassin::commission::null::NullCommission;
 use assassin::commission::charles_schwab::CharlesSchwab;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
 
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 

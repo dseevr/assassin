@@ -1,9 +1,10 @@
-use assassin::money::Money;
 use assassin::quote::Quote;
 
 extern crate chrono;
-
 use self::chrono::prelude::*;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Order {

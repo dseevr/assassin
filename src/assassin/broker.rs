@@ -1,4 +1,3 @@
-use assassin::money::Money;
 use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
@@ -9,6 +8,9 @@ use self::chrono::prelude::*;
 
 extern crate fnv;
 use self::fnv::FnvHashMap;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
 
 pub struct Broker {
 	balance: Money,

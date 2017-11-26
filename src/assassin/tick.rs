@@ -1,9 +1,10 @@
-use assassin::money::Money;
 use assassin::quote::Quote;
 
 extern crate chrono;
-
 use self::chrono::prelude::*;
+
+extern crate greenback;
+use greenback::greenback::Greenback as Money;
 
 // Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
 // AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292  0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
