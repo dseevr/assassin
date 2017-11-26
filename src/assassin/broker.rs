@@ -22,6 +22,8 @@ pub struct Broker {
 	current_date: DateTime<Utc>,
 	ticks_processed: i64,
 	quote_map_capacity: usize,
+
+	// TODO: store latest underlying price when first tick of day comes in
 }
 
 impl Broker {
@@ -56,6 +58,20 @@ impl Broker {
 	// pub fn orders(&self) -> Vec<Order> {
 	// 	self.orders.clone()
 	// }
+
+	pub fn call_quotes_for(&self, symbol: &str) -> Vec<Quote> {
+		let mut quotes: Vec<Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_call()).collect();
+		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
+
+		quotes
+	}
+
+	pub fn put_quotes_for(&self, symbol: &str) -> Vec<Quote> {
+		let mut quotes: Vec<Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_put()).collect();
+		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
+
+		quotes
+	}
 
 	pub fn process_simulation_data(&mut self, model: &mut Model) {
 		let mut day_changed;

@@ -78,6 +78,14 @@ impl Tick {
 		}
 	}
 
+	pub fn is_call(&self) -> bool {
+		self.call
+	}
+
+	pub fn is_put(&self) -> bool {
+		! self.is_call()
+	}
+
 	pub fn strike_price(&self) -> Money {
 		self.strike_price
 	}

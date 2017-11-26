@@ -1,11 +1,11 @@
 use assassin::broker::Broker;
 use assassin::order::Order;
-use assassin::quote::Quote;
 use assassin::traits::*;
-use assassin::util::add_commas;
 
 extern crate chrono;
 use self::chrono::prelude::*;
+
+static TICKER: &'static str = "AAPL";
 
 pub struct PMCC {
 }
@@ -15,17 +15,19 @@ impl PMCC {
 		PMCC{}
 	}
 
-	fn generate_open_order(&self, quotes: &Vec<Quote>) -> Option<Order> {
-		let quote = quotes[0].clone();
+	fn generate_open_order(&self, broker: &mut Broker) -> Option<Order> {
+		if broker.open_positions().len() >= 5 {
+			return None;
+		}
 
-		let o = Order::new_buy_open_order(&quote, 10, quote.midpoint_price());
+		let quote = &broker.call_quotes_for(TICKER)[0];
 
-		println!("buying {}", o.option_name());
+		let o = Order::new_buy_open_order(quote, 10, quote.midpoint_price());
 
 		Some(o)
 	}
 
-	fn generate_close_order(&self, _quotes: &Vec<Quote>) -> Option<Order> {
+	fn generate_close_order(&self, broker: &mut Broker) -> Option<Order> {
 		// let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 100, 2.0);
 
 		// Some(o)
@@ -47,29 +49,15 @@ impl Model for PMCC {
 		println!("===== start of {} ==================================================", day);
 		println!("");
 
-		// TODO: sort this so we get reproducible results
-		let mut quotes = broker.quotes_for("AAPL");
-		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
+		// TODO: update any charts, indicators, etc.
+		// self.update_indicators(quotes);
 
-		if quotes.is_empty() {
-			println!("no quotes available, skipping day");
-		} else if broker.open_positions().len() < 5 {
-			println!(
-				"running buy/sell logic for day ({} quotes available)",
-				add_commas(quotes.len()),
-			);
-			println!("");
+		if let Some(order) = self.generate_open_order(broker) {
+			broker.process_order(order); // TODO: check result
+		}
 
-			// TODO: update any charts, indicators, etc.
-			// self.update_indicators(quotes);
-
-			if let Some(order) = self.generate_open_order(&quotes) {
-				broker.process_order(order); // TODO: check result
-			}
-
-			if let Some(order) = self.generate_close_order(&quotes) {
-				broker.process_order(order); // TODO: check result
-			}
+		if let Some(order) = self.generate_close_order(broker) {
+			broker.process_order(order); // TODO: check result
 		}
 
 		// show summary for day

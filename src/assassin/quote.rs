@@ -13,6 +13,7 @@ pub struct Quote {
 	ask: Money,
 	strike_price: Money,
 	expiration_date: DateTime<Utc>,
+	call: bool,
 	// TODO: depth, etc. if available
 }
 
@@ -29,7 +30,16 @@ impl Quote {
 			ask: tick.ask(),
 			strike_price: tick.strike_price(),
 			expiration_date: tick.expiration_date(),
+			call: tick.is_call(),
 		}
+	}
+
+	pub fn is_call(&self) -> bool {
+		self.call
+	}
+
+	pub fn is_put(&self) -> bool {
+		! self.is_call()
 	}
 
 	pub fn midpoint_price(&self) -> Money {
