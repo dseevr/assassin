@@ -78,6 +78,10 @@ impl Tick {
 		}
 	}
 
+	pub fn underlying_price(&self) -> Money {
+		self.underlying_price
+	}
+
 	pub fn is_call(&self) -> bool {
 		self.call
 	}
