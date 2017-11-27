@@ -12,18 +12,18 @@ use greenback::Greenback as Money;
 static INPUT_FILE: &'static str = "/Users/billrobinson/Desktop/aapl_2013.csv";
 
 fn main() {
-	let starting_capital = Money::new(100_000, 0);
-	let feed = DiscountOptionData::new(INPUT_FILE);
-	let test_model = PMCC::new();
+    let starting_capital = Money::new(100_000, 0);
+    let feed = DiscountOptionData::new(INPUT_FILE);
+    let test_model = PMCC::new();
 
-	let commission = CharlesSchwab::new();
-	// let commission = NullCommission::new();
+    let commission = CharlesSchwab::new();
+    // let commission = NullCommission::new();
 
-	let broker = Broker::new(starting_capital, Box::new(commission), Box::new(feed));
+    let broker = Broker::new(starting_capital, Box::new(commission), Box::new(feed));
 
-	let mut simulation = Simulation::new(Box::new(test_model), Box::new(broker));
+    let mut simulation = Simulation::new(Box::new(test_model), Box::new(broker));
 
-	simulation.run();
+    simulation.run();
 
-	simulation.print_stats();
+    simulation.print_stats();
 }
