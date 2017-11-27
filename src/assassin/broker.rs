@@ -67,15 +67,20 @@ impl Broker {
 		self.underlying_prices.get(symbol).unwrap()
 	}
 
-	pub fn call_quotes_for(&self, symbol: &str) -> Vec<Quote> {
-		let mut quotes: Vec<Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_call()).collect();
+	// TODO: this should only return quotes for the desired symbol
+	pub fn quotes_for(&self, _symbol: &str) -> Vec<&Quote> {
+		self.quotes.iter().map(|(_, q)| q).collect()
+	}
+
+	pub fn call_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
+		let mut quotes: Vec<&Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_call()).collect();
 		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
 		quotes
 	}
 
-	pub fn put_quotes_for(&self, symbol: &str) -> Vec<Quote> {
-		let mut quotes: Vec<Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_put()).collect();
+	pub fn put_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
+		let mut quotes: Vec<&Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_put()).collect();
 		quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
 		quotes
@@ -215,11 +220,6 @@ impl Broker {
 			Some(q) => Some(q.clone()),
 			None    => None,
 		}
-	}
-
-	// TODO: this should only return quotes for the desired symbol
-	pub fn quotes_for(&self, _symbol: &str) -> Vec<Quote> {
-		self.quotes.iter().map(|(_, q)| q.clone()).collect()
 	}
 
 	// TODO: positions have a correct cost basis
