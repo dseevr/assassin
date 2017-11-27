@@ -95,10 +95,6 @@ impl Tick {
 		self.strike_price
 	}
 
-	pub fn quote(&self) -> Quote {
-		Quote::new(&self)
-	}
-
 	// See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
 	// e.g., CSCO171117C00019000
 	pub fn name(&self) -> String {

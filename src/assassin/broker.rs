@@ -89,7 +89,7 @@ impl Broker {
 		{
 			let first_tick = self.data_feed.next_tick().unwrap();
 			self.current_date = first_tick.date();
-			self.quotes.insert(first_tick.name(), first_tick.quote());
+			self.quotes.insert(first_tick.name(), Quote::new(&first_tick));
 			self.underlying_prices.insert(first_tick.symbol().to_string(), first_tick.underlying_price());
 		}
 
@@ -134,7 +134,7 @@ impl Broker {
 			// TODO: record last_tick time on struct
 
 			// update quote for this option
-			self.quotes.insert(tick.name(), tick.quote());
+			self.quotes.insert(tick.name(), Quote::new(&tick));
 
 			self.ticks_processed += 1;
 		}
