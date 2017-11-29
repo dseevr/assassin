@@ -39,6 +39,7 @@ impl Quote {
         self.call
     }
 
+    #[allow(dead_code)]
     pub fn is_put(&self) -> bool {
         !self.is_call()
     }

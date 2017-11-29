@@ -29,6 +29,7 @@ impl Order {
         self.buy
     }
 
+    #[allow(dead_code)]
     pub fn is_sell(&self) -> bool {
         !self.is_buy()
     }
@@ -110,6 +111,7 @@ impl Order {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_sell_open_order(quote: &Quote, quantity: i32, limit: Money) -> Order {
         let mut o = Order::new_buy_open_order(quote, quantity, limit);
         o.buy = false;
@@ -132,10 +134,12 @@ impl Order {
         o
     }
 
+    #[allow(dead_code)]
     pub fn buy_to_open(&self) -> bool {
         self.buy && self.open
     }
 
+    #[allow(dead_code)]
     pub fn sell_to_open(&self) -> bool {
         !self.buy && self.open
     }
@@ -144,6 +148,7 @@ impl Order {
         self.buy && !self.open
     }
 
+    #[allow(dead_code)]
     pub fn sell_to_close(&self) -> bool {
         !self.buy && !self.open
     }
@@ -165,6 +170,7 @@ impl Order {
         self.quantity
     }
 
+    #[allow(dead_code)]
     pub fn limit(&self) -> Money {
         self.limit
     }

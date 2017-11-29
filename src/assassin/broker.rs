@@ -62,6 +62,7 @@ impl Broker {
     // 	self.orders.clone()
     // }
 
+    #[allow(dead_code)]
     pub fn underlying_price_for(&self, symbol: &str) -> &Money {
         self.underlying_prices.get(symbol).unwrap()
     }
@@ -81,6 +82,7 @@ impl Broker {
         quotes
     }
 
+    #[allow(dead_code)]
     pub fn put_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
         let mut quotes: Vec<&Quote> = self.quotes_for(symbol)
             .into_iter()

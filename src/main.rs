@@ -3,7 +3,6 @@ use assassin::simulation::Simulation;
 use assassin::feeds::discount_option_data::DiscountOptionData;
 use assassin::models::pmcc::PMCC;
 use assassin::broker::Broker;
-// use assassin::commission::null::NullCommission;
 use assassin::commission::charles_schwab::CharlesSchwab;
 
 extern crate greenback;
@@ -17,7 +16,6 @@ fn main() {
     let test_model = PMCC::new();
 
     let commission = CharlesSchwab::new();
-    // let commission = NullCommission::new();
 
     let broker = Broker::new(starting_capital, Box::new(commission), Box::new(feed));
 

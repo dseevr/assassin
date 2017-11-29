@@ -1,5 +1,3 @@
-use assassin::quote::Quote;
-
 extern crate chrono;
 use self::chrono::prelude::*;
 
@@ -90,6 +88,7 @@ impl Tick {
         self.call
     }
 
+    #[allow(dead_code)]
     pub fn is_put(&self) -> bool {
         !self.is_call()
     }
@@ -112,15 +111,17 @@ impl Tick {
         )
     }
 
+    #[allow(dead_code)]
     pub fn days_until_expiration(&self) -> i32 {
         self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
     }
 
+    #[allow(dead_code)]
     pub fn midpoint_price(&self) -> Money {
         (self.ask + self.bid) / 2
     }
 
-    // TODO: move this stuff over to Quote
+    #[allow(dead_code)]
     pub fn intrinsic_value(&self) -> Money {
         if self.call {
             if self.underlying_price > self.strike_price {
@@ -137,12 +138,12 @@ impl Tick {
         }
     }
 
-    // TODO: move this stuff over to Quote
+    #[allow(dead_code)]
     pub fn extrinsic_value(&self) -> Money {
         self.midpoint_price() - self.intrinsic_value()
     }
 
-    // TODO: move this stuff over to Quote
+    #[allow(dead_code)]
     pub fn value_ratio(&self) -> f32 {
         // TODO: if i_value is 0, this is division by 0 and becomes infinity.
         //       see if we should return an Option<Money> in light of that...
@@ -153,7 +154,7 @@ impl Tick {
         (extrinsic / intrinsic) / 100.0
     }
 
-    // TODO: move this stuff over to Quote
+    #[allow(dead_code)]
     pub fn print_deets(&self) {
         println!("=======================");
         println!("name: {}", self.name());

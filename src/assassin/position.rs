@@ -93,6 +93,7 @@ impl Position {
         self.quantity > 0
     }
 
+    #[allow(dead_code)]
     pub fn is_short(&self) -> bool {
         !self.is_long()
     }
@@ -101,6 +102,7 @@ impl Position {
         self.quantity != 0 // can be negative if short
     }
 
+    #[allow(dead_code)]
     pub fn is_closed(&self) -> bool {
         !self.is_open()
     }

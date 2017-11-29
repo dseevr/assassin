@@ -26,7 +26,7 @@ impl PMCC {
         Some(o)
     }
 
-    fn generate_close_order(&self, broker: &mut Broker) -> Option<Order> {
+    fn generate_close_order(&self, _broker: &mut Broker) -> Option<Order> {
         // let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 100, 2.0);
 
         // Some(o)
