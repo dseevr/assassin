@@ -13,17 +13,12 @@ pub struct Simulation {
 
     // TODO: add settings variables (slippage, spread multipliers, etc.)
     // TODO: add target stats that the model must hit (sharpe, DD, etc.)
-
     start_time: Instant,
     starting_balance: Money,
 }
 
 impl Simulation {
-    pub fn new(
-        model: Box<Model>,
-        broker: Box<Broker>,
-        ) -> Simulation {
-
+    pub fn new(model: Box<Model>, broker: Box<Broker>) -> Simulation {
         let starting_balance = broker.account_balance();
 
         Simulation {
@@ -48,7 +43,6 @@ impl Simulation {
     }
 
     pub fn print_stats(&self) {
-
         println!("");
         println!("===============================================================");
         println!("");
@@ -61,7 +55,7 @@ impl Simulation {
         let mut running_total = self.starting_balance;
 
         let mut positions = self.broker.positions().clone();
-        positions.sort_by(|a,b| a.name().cmp(&b.name()));
+        positions.sort_by(|a, b| a.name().cmp(&b.name()));
 
         for pos in &positions {
             println!("----- {} -----", pos.name());
@@ -94,7 +88,9 @@ impl Simulation {
         println!("Ending balance: {}", balance);
         println!("Change: {}", balance_change);
 
-        let capital_growth = ((balance.raw_value() as f32 / self.starting_balance.raw_value() as f32) * 100.0) - 100.0;
+        let capital_growth = ((balance.raw_value() as f32
+            / self.starting_balance.raw_value() as f32) * 100.0)
+            - 100.0;
 
         // TODO: Sum
         // let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();

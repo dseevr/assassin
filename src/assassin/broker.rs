@@ -31,11 +31,10 @@ pub struct Broker {
 
 impl Broker {
     pub fn new(
-            initial_balance: Money,
-            commission_schedule: Box<Commission>,
-            data_feed: Box<DataFeed>,
-        ) -> Broker {
-
+        initial_balance: Money,
+        commission_schedule: Box<Commission>,
+        data_feed: Box<DataFeed>,
+    ) -> Broker {
         if initial_balance <= Money::zero() {
             panic!("balance must be > 0.0 (got {})", initial_balance);
         }
@@ -43,7 +42,7 @@ impl Broker {
         // this is just so we have a default value
         let current_date = Utc::now();
 
-        Broker{
+        Broker {
             balance: initial_balance,
             positions: FnvHashMap::default(),
             orders: vec![],
@@ -73,14 +72,20 @@ impl Broker {
     }
 
     pub fn call_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
-        let mut quotes: Vec<&Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_call()).collect();
+        let mut quotes: Vec<&Quote> = self.quotes_for(symbol)
+            .into_iter()
+            .filter(|q| q.is_call())
+            .collect();
         quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
         quotes
     }
 
     pub fn put_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
-        let mut quotes: Vec<&Quote> = self.quotes_for(symbol).into_iter().filter(|q| q.is_put()).collect();
+        let mut quotes: Vec<&Quote> = self.quotes_for(symbol)
+            .into_iter()
+            .filter(|q| q.is_put())
+            .collect();
         quotes.sort_by(|a, b| a.name().cmp(&b.name()));
 
         quotes
@@ -94,8 +99,12 @@ impl Broker {
         {
             let first_tick = self.data_feed.next_tick().unwrap();
             self.current_date = first_tick.date();
-            self.quotes.insert(first_tick.name(), Quote::new(&first_tick));
-            self.underlying_prices.insert(first_tick.symbol().to_string(), first_tick.underlying_price());
+            self.quotes
+                .insert(first_tick.name(), Quote::new(&first_tick));
+            self.underlying_prices.insert(
+                first_tick.symbol().to_string(),
+                first_tick.underlying_price(),
+            );
         }
 
         while let Some(tick) = self.data_feed.next_tick() {
@@ -111,7 +120,8 @@ impl Broker {
 
             // ----- after hours cleanup ---------------------------------------
 
-            self.underlying_prices.insert(tick.symbol().to_string(), tick.underlying_price());
+            self.underlying_prices
+                .insert(tick.symbol().to_string(), tick.underlying_price());
             self.current_date = tick.date();
 
             if day_changed {
@@ -129,7 +139,7 @@ impl Broker {
 
                 self.quotes = FnvHashMap::with_capacity_and_hasher(
                     self.quote_map_capacity,
-                    Default::default()
+                    Default::default(),
                 );
             }
 
@@ -156,7 +166,6 @@ impl Broker {
 
         for (option_name, position) in &self.positions {
             if position.is_open() && position.is_expired(self.current_date) {
-
                 println!("closing position {} due to expiration:", option_name);
 
                 let quote = self.quote_for(position.name()).unwrap();
@@ -197,7 +206,7 @@ impl Broker {
         }
 
         for order in orders {
-            if ! self.process_order(order) {
+            if !self.process_order(order) {
                 panic!("failed to process_order... margin call?");
             }
         }
@@ -218,14 +227,13 @@ impl Broker {
     pub fn quote_for(&self, option_name: &str) -> Option<Quote> {
         match self.quotes.get(option_name) {
             Some(q) => Some(q.clone()),
-            None    => None,
+            None => None,
         }
     }
 
     // TODO: positions have a correct cost basis
 
     pub fn process_order(&mut self, order: Order) -> bool {
-
         // TODO: assign a unique id to each order
 
         // TODO: exit cleanly instead of exploding?
@@ -246,7 +254,6 @@ impl Broker {
         let required_margin = order.margin_requirement(fill_price);
 
         if order.is_buy() {
-
             if required_margin + commish > self.balance {
                 println!(
                     "not enough money (need {} + {} commission, have {})",
@@ -272,7 +279,10 @@ impl Broker {
         // TODO: replace this .to_string() with &str support
         let key = filled_order.option_name().to_string();
 
-        self.positions.entry(key).or_insert(Position::new(&quote)).apply_order(&filled_order);
+        self.positions
+            .entry(key)
+            .or_insert(Position::new(&quote))
+            .apply_order(&filled_order);
 
         let original_balance = self.balance;
 
@@ -300,7 +310,10 @@ impl Broker {
     }
 
     pub fn open_positions(&self) -> Vec<&Position> {
-        self.positions().into_iter().filter(|p| p.is_open() ).collect()
+        self.positions()
+            .into_iter()
+            .filter(|p| p.is_open())
+            .collect()
     }
 
     pub fn total_order_count(&self) -> i32 {

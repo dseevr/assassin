@@ -6,14 +6,14 @@ use greenback::Greenback as Money;
 
 pub struct CharlesSchwab {
     base_fee: Money,
-    per_contract: Money
+    per_contract: Money,
 }
 
 impl CharlesSchwab {
     pub fn new() -> CharlesSchwab {
-        CharlesSchwab{
+        CharlesSchwab {
             base_fee: Money::new(4, 95),
-            per_contract: Money::new(0, 65)
+            per_contract: Money::new(0, 65),
         }
     }
 }

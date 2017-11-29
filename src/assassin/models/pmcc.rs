@@ -7,12 +7,11 @@ use self::chrono::prelude::*;
 
 static TICKER: &'static str = "AAPL";
 
-pub struct PMCC {
-}
+pub struct PMCC {}
 
 impl PMCC {
     pub fn new() -> PMCC {
-        PMCC{}
+        PMCC {}
     }
 
     fn generate_open_order(&self, broker: &mut Broker) -> Option<Order> {
@@ -46,7 +45,10 @@ impl Model for PMCC {
         let current_date = broker.current_date();
         let day = current_date.format("%Y-%m-%d");
 
-        println!("===== start of {} ==================================================", day);
+        println!(
+            "===== start of {} ==================================================",
+            day
+        );
         println!("");
 
         // TODO: update any charts, indicators, etc.

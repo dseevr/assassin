@@ -20,7 +20,7 @@ impl Position {
     // NOTE: apply_order() still needs to be called afterwards.
     //       order is only used to set the name/symbol/expiration date
     pub fn new(quote: &Quote) -> Position {
-        Position{
+        Position {
             name: quote.name().to_string(),
             symbol: quote.symbol().to_string(),
             quantity: 0,
@@ -43,8 +43,7 @@ impl Position {
             //       (i.e., a buy is 10, a sell is -10) for quantity, but
             //       we want to invert this because we want a buy to be
             //       a debit and a sell to be a credit.
-            sum - (o.fill_price() * 100 * o.canonical_quantity())
-        )
+            sum - (o.fill_price() * 100 * o.canonical_quantity()))
     }
 
     // OPTIMIZE: this can be updated when orders are applied
@@ -95,7 +94,7 @@ impl Position {
     }
 
     pub fn is_short(&self) -> bool {
-        ! self.is_long()
+        !self.is_long()
     }
 
     pub fn is_open(&self) -> bool {
@@ -103,7 +102,7 @@ impl Position {
     }
 
     pub fn is_closed(&self) -> bool {
-        ! self.is_open()
+        !self.is_open()
     }
 
     // TODO: add expires_on() and use in Broker.process_order()

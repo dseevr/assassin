@@ -6,7 +6,7 @@ pub struct NullCommission {}
 
 impl NullCommission {
     pub fn new() -> NullCommission {
-        NullCommission{}
+        NullCommission {}
     }
 }
 

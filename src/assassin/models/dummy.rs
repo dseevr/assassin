@@ -5,7 +5,7 @@ pub struct DummyModel {}
 
 impl DummyModel {
     pub fn new() -> DummyModel {
-        DummyModel{}
+        DummyModel {}
     }
 }
 

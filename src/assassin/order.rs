@@ -30,13 +30,13 @@ impl Order {
     }
 
     pub fn is_sell(&self) -> bool {
-        ! self.is_buy()
+        !self.is_buy()
     }
 
     pub fn commission(&self) -> Money {
         match self.commission {
             Some(c) => c,
-            None => panic!("can't get commission on unfilled order")
+            None => panic!("can't get commission on unfilled order"),
         }
     }
 
@@ -44,18 +44,22 @@ impl Order {
         self.quote = Some(quote.clone());
         self.fill_price = Some(price);
         self.commission = Some(commish);
-        self.filled_date  = Some(date);
+        self.filled_date = Some(date);
     }
 
     pub fn fill_price(&self) -> Money {
         match self.fill_price {
             Some(fp) => fp,
-            None => panic!("can't get fill_price on unfilled order")
+            None => panic!("can't get fill_price on unfilled order"),
         }
     }
 
     pub fn buy_or_sell_string(&self) -> &str {
-        if self.buy { "BUY" } else { "SELL" }
+        if self.buy {
+            "BUY"
+        } else {
+            "SELL"
+        }
     }
 
     // "AAPL: BUY 10 CALL $150 STRIKE at LIMIT $2.50"
@@ -89,7 +93,7 @@ impl Order {
             panic!("limit must be >= 0.0 (got {})", limit);
         }
 
-        Order{
+        Order {
             symbol: quote.symbol().to_string(),
             name: quote.name().to_string(),
             buy: true,
@@ -133,15 +137,15 @@ impl Order {
     }
 
     pub fn sell_to_open(&self) -> bool {
-        ! self.buy && self.open
+        !self.buy && self.open
     }
 
     pub fn buy_to_close(&self) -> bool {
-        self.buy && ! self.open
+        self.buy && !self.open
     }
 
     pub fn sell_to_close(&self) -> bool {
-        ! self.buy && ! self.open
+        !self.buy && !self.open
     }
 
     pub fn margin_requirement(&self, price: Money) -> Money {
@@ -169,7 +173,7 @@ impl Order {
         if self.buy {
             self.quantity
         } else {
-            - self.quantity
+            -self.quantity
         }
     }
 

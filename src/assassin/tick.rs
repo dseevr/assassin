@@ -6,9 +6,13 @@ use self::chrono::prelude::*;
 extern crate greenback;
 use greenback::Greenback as Money;
 
-// Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
-// AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292  0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
-// AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,2013-01-02
+// Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume
+// AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292
+// AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,
+
+// ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
+// 0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
+// 2013-01-02
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct Tick {
@@ -33,7 +37,6 @@ pub struct Tick {
 }
 
 impl Tick {
-
     pub fn new(
         symbol: String,
         expiration_date: DateTime<Utc>,
@@ -59,7 +62,7 @@ impl Tick {
             format!("{}{}{}", year, month, day)
         };
 
-        Tick{
+        Tick {
             symbol: symbol,
             expiration_date: expiration_date,
             formatted_expiration_date: formatted_expiration_date,
@@ -88,7 +91,7 @@ impl Tick {
     }
 
     pub fn is_put(&self) -> bool {
-        ! self.is_call()
+        !self.is_call()
     }
 
     pub fn strike_price(&self) -> Money {
@@ -110,7 +113,6 @@ impl Tick {
     }
 
     pub fn days_until_expiration(&self) -> i32 {
-        // TODO: use https://docs.rs/chrono/0.4.0/chrono/trait.Datelike.html#method.num_days_from_ce until a better solution is found
         self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
     }
 
@@ -145,8 +147,10 @@ impl Tick {
         // TODO: if i_value is 0, this is division by 0 and becomes infinity.
         //       see if we should return an Option<Money> in light of that...
 
-        let res = self.extrinsic_value().raw_value() as f32 / self.intrinsic_value().raw_value() as f32;
-        res / 100.0
+        let extrinsic = self.extrinsic_value().raw_value() as f32;
+        let intrinsic = self.intrinsic_value().raw_value() as f32;
+
+        (extrinsic / intrinsic) / 100.0
     }
 
     // TODO: move this stuff over to Quote

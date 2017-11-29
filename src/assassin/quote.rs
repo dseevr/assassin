@@ -24,7 +24,7 @@ impl Quote {
             panic!("got bid {} > ask {}", tick.bid(), tick.ask());
         }
 
-        Quote{
+        Quote {
             name: tick.name(),
             symbol: tick.symbol().to_string(),
             bid: tick.bid(),
@@ -40,7 +40,7 @@ impl Quote {
     }
 
     pub fn is_put(&self) -> bool {
-        ! self.is_call()
+        !self.is_call()
     }
 
     pub fn midpoint_price(&self) -> Money {

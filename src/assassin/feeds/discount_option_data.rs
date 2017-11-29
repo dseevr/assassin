@@ -24,17 +24,25 @@ impl DiscountOptionData {
         // eat the header row
         // enumerator.next();
 
-        DiscountOptionData{
+        DiscountOptionData {
             enumerator: enumerator,
         }
     }
 }
 
-//    0         1            2      3        4       5         6        7         8        9           10           11     12    13       14     15             16         17
-// Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
-// AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292  0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
-// Symbol,ExpirationDate,AskPrice,AskSize,BidPrice,BidSize,LastPrice,PutCall,StrikePrice,Volume,ImpliedVolatility,Delta,Gamma,Vega,Rho,OpenInterest,UnderlyingPrice,DataDate
-// AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,2013-01-02
+//    0         1            2      3        4       5         6        7         8        9
+// Symbol ExpirationDate AskPrice AskSize BidPrice BidSize LastPrice PutCall StrikePrice Volume
+// AAPL   2013-01-04     10.55            10.35            10.55     call    540         14292
+// Symbol,ExpirationDate,AskPrice,AskSize,BidPrice,BidSize,LastPrice,PutCall,StrikePrice,Volume,
+// AAPL,2013-01-04,10.55,,10.35,,10.55,call,540,14292,0.295,0.7809,2.4778,11.9371,,8666,549.03,
+
+//       10           11     12    13       14     15             16         17
+// ImpliedVolatility Delta  Gamma  Vega,    Rho OpenInterest UnderlyingPrice DataDate
+// 0.295             0.7809 2.4778 11.9371      8666         549.03          2013-01-02
+// ImpliedVolatility,Delta,Gamma,Vega,Rho,OpenInterest,UnderlyingPrice,DataDate
+// 2013-01-02
+
+
 impl DataFeed for DiscountOptionData {
     fn next_tick(&mut self) -> Option<Tick> {
         let e = self.enumerator.next();
@@ -54,7 +62,8 @@ impl DataFeed for DiscountOptionData {
 
         let expiration_date = {
             let date_parts: Vec<u32> = v[1].split('-').map(|p| p.parse().unwrap()).collect();
-            Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2]).and_hms(0, 0, 0)
+            Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2])
+                .and_hms(0, 0, 0)
         };
 
         let ask: f32 = v[2].parse().unwrap();
@@ -83,7 +92,8 @@ impl DataFeed for DiscountOptionData {
 
         let date = {
             let date_parts: Vec<u32> = v[17].split('-').map(|p| p.parse().unwrap()).collect();
-            Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2]).and_hms(0, 0, 0)
+            Utc.ymd(date_parts[0] as i32, date_parts[1], date_parts[2])
+                .and_hms(0, 0, 0)
         };
 
         let t = Tick::new(
