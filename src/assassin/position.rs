@@ -50,16 +50,7 @@ impl Position {
 
     // OPTIMIZE: this can be updated when orders are applied
     pub fn commission_paid(&self) -> Money {
-        // TODO: Sum
-        // self.orders.iter().map(|o| o.commission()).sum()
-
-        let mut res = Money::zero();
-
-        for o in &self.orders {
-            res += o.commission();
-        }
-
-        res
+        self.orders.iter().map(|o| o.commission()).sum()
     }
 
     pub fn symbol(&self) -> Rc<str> {

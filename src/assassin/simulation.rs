@@ -91,12 +91,7 @@ impl Simulation {
             / self.starting_balance.raw_value() as f32) * 100.0)
             - 100.0;
 
-        // TODO: Sum
-        // let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();
-        let mut total_commish = Money::zero();
-        for p in &positions {
-            total_commish += p.commission_paid()
-        }
+        let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();
 
         let commish_percent_of_profit = if balance_change > Money::zero() {
             (total_commish.raw_value() as f32 / balance_change.raw_value() as f32) * 100.0
@@ -105,18 +100,18 @@ impl Simulation {
         };
 
         let order_counts: Vec<i32> = positions.iter().map(|p| p.order_count()).collect();
-        let order_count: i32 = order_counts.iter().sum();
+        let total_order_count: i32 = order_counts.iter().sum();
 
         let average_commission = {
-            if order_count > 0 {
-                total_commish / order_count
+            if total_order_count > 0 {
+                total_commish / total_order_count
             } else {
                 Money::zero()
             }
         };
 
         println!("Capital growth: {:.2}%", capital_growth);
-        println!("Total orders: {}", order_count);
+        println!("Total orders: {}", total_order_count);
         println!(
             "Commission paid: {} ({:.2}% of profit)",
             total_commish,
