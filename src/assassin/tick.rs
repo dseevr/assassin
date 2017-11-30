@@ -30,6 +30,7 @@ pub struct Tick {
     open_interest: i32,
     underlying_price: Money,
     date: DateTime<Utc>,
+    name: String,
 
     // TODO: bool or type for american vs european
 }
@@ -60,6 +61,16 @@ impl Tick {
             format!("{}{}{}", year, month, day)
         };
 
+        let name = format!(
+            "{symbol}{date}{t}{price:>0width$}0",
+            symbol = symbol,
+            date = formatted_expiration_date,
+            t = if call { "C" } else { "P" },
+            // this used to be multiplied by 100 but raw_value() is the same thing
+            price = strike_price.raw_value(),
+            width = 7,
+        );
+
         Tick {
             symbol: symbol,
             expiration_date: expiration_date,
@@ -77,6 +88,7 @@ impl Tick {
             open_interest: open_interest,
             underlying_price: underlying_price,
             date: date,
+            name: name,
         }
     }
 
@@ -100,15 +112,7 @@ impl Tick {
     // See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
     // e.g., CSCO171117C00019000
     pub fn name(&self) -> String {
-        format!(
-            "{symbol}{date}{t}{price:>0width$}0",
-            symbol = self.symbol,
-            date = self.formatted_expiration_date,
-            t = if self.call { "C" } else { "P" },
-            // this used to be multiplied by 100 but raw_value() is the same thing
-            price = self.strike_price.raw_value(),
-            width = 7,
-        )
+        self.name.clone()
     }
 
     #[allow(dead_code)]
