@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use assassin::order::Order;
 use assassin::quote::Quote;
 
@@ -9,8 +11,8 @@ use greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Position {
-    name: String,
-    symbol: String,
+    name: Rc<str>,
+    symbol: Rc<str>,
     quantity: i32,
     expiration_date: DateTime<Utc>,
     orders: Vec<Order>,
@@ -21,8 +23,8 @@ impl Position {
     //       order is only used to set the name/symbol/expiration date
     pub fn new(quote: &Quote) -> Position {
         Position {
-            name: quote.name().to_string(),
-            symbol: quote.symbol().to_string(),
+            name: quote.name(),
+            symbol: quote.symbol(),
             quantity: 0,
             expiration_date: quote.expiration_date(),
             // don't set the order here because it gets applied in

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use assassin::quote::Quote;
 
 extern crate chrono;
@@ -8,8 +10,8 @@ use greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Order {
-    symbol: String,
-    name: String,
+    symbol: Rc<str>,
+    name: Rc<str>,
     buy: bool,
     open: bool,
     quantity: i32,
@@ -95,8 +97,8 @@ impl Order {
         }
 
         Order {
-            symbol: quote.symbol().to_string(),
-            name: quote.name().to_string(),
+            symbol: quote.symbol(),
+            name: quote.name(),
             buy: true,
             open: true,
             quantity: quantity,

@@ -16,7 +16,7 @@ use greenback::Greenback as Money;
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct Tick {
-    symbol: String,
+    symbol: Rc<str>,
     expiration_date: DateTime<Utc>,
     formatted_expiration_date: String,
     ask: Money,
@@ -32,7 +32,7 @@ pub struct Tick {
     open_interest: i32,
     underlying_price: Money,
     date: DateTime<Utc>,
-    name: String,
+    name: Rc<str>,
 
     // TODO: bool or type for american vs european
 }
@@ -73,8 +73,11 @@ impl Tick {
             width = 7,
         );
 
+        let symbol_ref: &str = &symbol;
+        let name_ref: &str = &name;
+
         Tick {
-            symbol: symbol,
+            symbol: Rc::from(symbol_ref),
             expiration_date: expiration_date,
             formatted_expiration_date: formatted_expiration_date,
             ask: ask,
@@ -90,7 +93,7 @@ impl Tick {
             open_interest: open_interest,
             underlying_price: underlying_price,
             date: date,
-            name: name,
+            name: Rc::from(name_ref),
         }
     }
 
@@ -114,8 +117,7 @@ impl Tick {
     // See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
     // e.g., CSCO171117C00019000
     pub fn name(&self) -> Rc<str> {
-        let s: &str = &self.name;
-        Rc::from(s)
+        Rc::clone(&self.name)
     }
 
     #[allow(dead_code)]
@@ -184,8 +186,7 @@ impl Tick {
     }
 
     pub fn symbol(&self) -> Rc<str> {
-        let s: &str = &self.symbol;
-        Rc::from(s)
+        Rc::clone(&self.symbol)
     }
 
     pub fn bid(&self) -> Money {

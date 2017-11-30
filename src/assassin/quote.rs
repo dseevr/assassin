@@ -11,7 +11,7 @@ use greenback::Greenback as Money;
 #[derive(Clone)]
 pub struct Quote {
     name: Rc<str>,
-    symbol: String,
+    symbol: Rc<str>,
     bid: Money,
     ask: Money,
     strike_price: Money,
@@ -28,7 +28,7 @@ impl Quote {
 
         Quote {
             name: tick.name(),
-            symbol: tick.symbol().to_string(),
+            symbol: tick.symbol(),
             bid: tick.bid(),
             ask: tick.ask(),
             strike_price: tick.strike_price(),
@@ -54,12 +54,12 @@ impl Quote {
         self.strike_price
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn name(&self) -> Rc<str> {
+        Rc::clone(&self.name)
     }
 
-    pub fn symbol(&self) -> &str {
-        &self.symbol
+    pub fn symbol(&self) -> Rc<str> {
+        Rc::clone(&self.symbol)
     }
 
     pub fn bid(&self) -> Money {
