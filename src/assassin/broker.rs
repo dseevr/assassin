@@ -27,8 +27,6 @@ pub struct Broker {
     ticks_processed: i64,
     quote_map_capacity: usize,
     underlying_prices: FnvHashMap<Rc<str>, Money>,
-
-    // TODO: store latest underlying price when first tick of day comes in
 }
 
 impl Broker {

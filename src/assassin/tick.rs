@@ -18,7 +18,6 @@ use greenback::Greenback as Money;
 pub struct Tick {
     symbol: Rc<str>,
     expiration_date: DateTime<Utc>,
-    formatted_expiration_date: String,
     ask: Money,
     bid: Money,
     last_price: Money,
@@ -55,18 +54,12 @@ impl Tick {
         underlying_price: Money,
         date: DateTime<Utc>,
     ) -> Tick {
-        let formatted_expiration_date = {
-            let year = expiration_date.year();
-            let month = expiration_date.month();
-            let day = expiration_date.day();
-
-            format!("{}{}{}", year, month, day)
-        };
-
         let name = format!(
-            "{symbol}{date}{t}{price:>0width$}0",
+            "{symbol}{year}{month}{day}{t}{price:>0width$}0",
             symbol = symbol,
-            date = formatted_expiration_date,
+            year = expiration_date.year(),
+            month = expiration_date.month(),
+            day = expiration_date.day(),
             t = if call { "C" } else { "P" },
             // this used to be multiplied by 100 but raw_value() is the same thing
             price = strike_price.raw_value(),
@@ -79,7 +72,6 @@ impl Tick {
         Tick {
             symbol: Rc::from(symbol_ref),
             expiration_date: expiration_date,
-            formatted_expiration_date: formatted_expiration_date,
             ask: ask,
             bid: bid,
             last_price: last_price,

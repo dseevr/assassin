@@ -10,8 +10,6 @@ pub trait Commission {
 }
 
 pub trait DataFeed {
-    // TODO: have a way to detect if the data we're parsing
-    //       is incorrectly containing duplicated data for holidays
     fn next_tick(&mut self) -> Option<Tick>;
 }
 
