@@ -283,13 +283,11 @@ impl Broker {
         let original_balance = self.balance;
 
         // TODO: put this stuff in an apply_order() function or something
-        // TODO: binary
-        self.balance = self.balance + cost_basis;
+        self.balance += cost_basis;
 
         // apply commission to balance and running total of paid commission
-        // TODO: binary
-        self.balance = self.balance - commish;
-        self.commission_paid = self.commission_paid + commish;
+        self.balance -= commish;
+        self.commission_paid += commish;
 
         println!(
             "ORDER FILLED. Commission: {} - Old balance: {} - New balance: {}",

@@ -56,7 +56,7 @@ impl Position {
         let mut res = Money::zero();
 
         for o in &self.orders {
-            res = res + o.commission();
+            res += o.commission();
         }
 
         res

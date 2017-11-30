@@ -95,7 +95,7 @@ impl Simulation {
         // let total_commish: Money = positions.iter().map(|p| p.commission_paid()).sum();
         let mut total_commish = Money::zero();
         for p in &positions {
-            total_commish = total_commish + p.commission_paid()
+            total_commish += p.commission_paid()
         }
 
         let commish_percent_of_profit = if balance_change > Money::zero() {
