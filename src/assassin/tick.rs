@@ -183,8 +183,9 @@ impl Tick {
         self.expiration_date
     }
 
-    pub fn symbol(&self) -> &str {
-        &self.symbol
+    pub fn symbol(&self) -> Rc<str> {
+        let s: &str = &self.symbol;
+        Rc::from(s)
     }
 
     pub fn bid(&self) -> Money {

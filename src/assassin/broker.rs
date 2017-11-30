@@ -26,7 +26,7 @@ pub struct Broker {
     current_date: DateTime<Utc>,
     ticks_processed: i64,
     quote_map_capacity: usize,
-    underlying_prices: FnvHashMap<String, Money>,
+    underlying_prices: FnvHashMap<Rc<str>, Money>,
 
     // TODO: store latest underlying price when first tick of day comes in
 }
@@ -105,10 +105,8 @@ impl Broker {
             self.current_date = first_tick.date();
             self.quotes
                 .insert(first_tick.name(), Quote::new(&first_tick));
-            self.underlying_prices.insert(
-                first_tick.symbol().to_string(),
-                first_tick.underlying_price(),
-            );
+            self.underlying_prices
+                .insert(first_tick.symbol(), first_tick.underlying_price());
         }
 
         while let Some(tick) = self.data_feed.next_tick() {
@@ -125,7 +123,7 @@ impl Broker {
             // ----- after hours cleanup ---------------------------------------
 
             self.underlying_prices
-                .insert(tick.symbol().to_string(), tick.underlying_price());
+                .insert(tick.symbol(), tick.underlying_price());
             self.current_date = tick.date();
 
             if day_changed {
