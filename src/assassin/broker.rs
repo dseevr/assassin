@@ -59,11 +59,6 @@ impl Broker {
         }
     }
 
-    // TODO: is this needed?
-    // pub fn orders(&self) -> Vec<Order> {
-    // 	self.orders.clone()
-    // }
-
     #[allow(dead_code)]
     pub fn underlying_price_for(&self, symbol: &str) -> &Money {
         self.underlying_prices.get(symbol).unwrap()
@@ -274,10 +269,6 @@ impl Broker {
         // fill the order and record it
         filled_order.filled_at(fill_price, commish, &quote, self.current_date);
 
-        // TODO: do we even need to store orders on the broker?
-        //       we currently only iterate over them as part of a position.
-        // self.orders.push(filled_order.clone());
-
         let key = filled_order.option_name();
 
         self.positions
@@ -306,8 +297,12 @@ impl Broker {
         true
     }
 
+    // TODO: maybe don't sort this all the time?
+    //       open_positions() consumes this after it's sorted, etc.
     pub fn positions(&self) -> Vec<&Position> {
-        self.positions.iter().map(|(_, p)| p).collect()
+        let mut ps: Vec<&Position> = self.positions.iter().map(|(_, p)| p).collect();
+        ps.sort_by(|a, b| a.name().cmp(&b.name()));
+        ps
     }
 
     pub fn open_positions(&self) -> Vec<&Position> {

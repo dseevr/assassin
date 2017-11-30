@@ -54,8 +54,7 @@ impl Simulation {
 
         let mut running_total = self.starting_balance;
 
-        let mut positions = self.broker.positions().clone();
-        positions.sort_by(|a, b| a.name().cmp(&b.name()));
+        let positions = self.broker.positions();
 
         for pos in &positions {
             println!("----- {} -----", pos.name());
