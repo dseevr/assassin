@@ -62,12 +62,12 @@ impl Position {
         res
     }
 
-    pub fn symbol(&self) -> &str {
-        &self.symbol
+    pub fn symbol(&self) -> Rc<str> {
+        Rc::clone(&self.symbol)
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn name(&self) -> Rc<str> {
+        Rc::clone(&self.name)
     }
 
     pub fn orders(&self) -> &Vec<Order> {

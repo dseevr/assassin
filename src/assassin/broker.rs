@@ -16,12 +16,12 @@ use greenback::Greenback as Money;
 
 pub struct Broker {
     balance: Money,
-    positions: FnvHashMap<String, Position>,
+    positions: FnvHashMap<Rc<str>, Position>,
     orders: Vec<Order>,
     commission_schedule: Box<Commission>,
     commission_paid: Money,
     data_feed: Box<DataFeed>,
-    // TODO: convert this into a FnvHashMap<String, FnvHashMap<String,Quote>>
+    // TODO: convert this into a FnvHashMap<Rc<str>, FnvHashMap<Rc<str>, Quote>>
     quotes: FnvHashMap<Rc<str>, Quote>,
     current_date: DateTime<Utc>,
     ticks_processed: i64,
@@ -226,8 +226,8 @@ impl Broker {
         self.balance
     }
 
-    pub fn quote_for(&self, option_name: &str) -> Option<Quote> {
-        match self.quotes.get(option_name) {
+    pub fn quote_for(&self, option_name: Rc<str>) -> Option<Quote> {
+        match self.quotes.get(&option_name) {
             Some(q) => Some(q.clone()),
             None => None,
         }
@@ -278,8 +278,7 @@ impl Broker {
         //       we currently only iterate over them as part of a position.
         // self.orders.push(filled_order.clone());
 
-        // TODO: replace this .to_string() with &str support
-        let key = filled_order.option_name().to_string();
+        let key = filled_order.option_name();
 
         self.positions
             .entry(key)

@@ -77,8 +77,8 @@ impl Order {
         )
     }
 
-    pub fn option_name(&self) -> &str {
-        &self.name
+    pub fn option_name(&self) -> Rc<str> {
+        Rc::clone(&self.name)
     }
 
     // TODO: order expiration date would be the ORDER'S expiration date
