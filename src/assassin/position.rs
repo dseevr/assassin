@@ -15,7 +15,7 @@ pub struct Position {
     symbol: Rc<str>,
     quantity: i32,
     expiration_date: DateTime<Utc>,
-    orders: Vec<Order>,
+    orders: Vec<Rc<Order>>,
 }
 
 impl Position {
@@ -70,7 +70,7 @@ impl Position {
         Rc::clone(&self.name)
     }
 
-    pub fn orders(&self) -> &Vec<Order> {
+    pub fn orders(&self) -> &Vec<Rc<Order>> {
         &self.orders
     }
 
@@ -78,9 +78,9 @@ impl Position {
         self.orders.len() as i32
     }
 
-    pub fn apply_order(&mut self, order: &Order) {
+    pub fn apply_order(&mut self, order: Rc<Order>) {
         self.quantity += order.canonical_quantity();
-        self.orders.push(order.clone());
+        self.orders.push(order);
     }
 
     pub fn quantity(&self) -> i32 {

@@ -269,18 +269,22 @@ impl Broker {
         // fill the order and record it
         filled_order.filled_at(fill_price, commish, &quote, self.current_date);
 
+        let cost_basis = filled_order.canonical_cost_basis();
+
         let key = filled_order.option_name();
+
+        let filled_order_rc = Rc::from(filled_order);
 
         self.positions
             .entry(key)
             .or_insert(Position::new(&quote))
-            .apply_order(&filled_order);
+            .apply_order(filled_order_rc);
 
         let original_balance = self.balance;
 
         // TODO: put this stuff in an apply_order() function or something
         // TODO: binary
-        self.balance = self.balance + filled_order.canonical_cost_basis();
+        self.balance = self.balance + cost_basis;
 
         // apply commission to balance and running total of paid commission
         // TODO: binary
