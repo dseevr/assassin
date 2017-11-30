@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
@@ -20,7 +22,7 @@ pub struct Broker {
     commission_paid: Money,
     data_feed: Box<DataFeed>,
     // TODO: convert this into a FnvHashMap<String, FnvHashMap<String,Quote>>
-    quotes: FnvHashMap<String, Quote>,
+    quotes: FnvHashMap<Rc<str>, Quote>,
     current_date: DateTime<Utc>,
     ticks_processed: i64,
     quote_map_capacity: usize,

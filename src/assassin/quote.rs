@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use assassin::tick::Tick;
 
 extern crate chrono;
@@ -8,7 +10,7 @@ use greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Quote {
-    name: String,
+    name: Rc<str>,
     symbol: String,
     bid: Money,
     ask: Money,

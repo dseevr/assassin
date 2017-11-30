@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 extern crate chrono;
 use self::chrono::prelude::*;
 
@@ -111,8 +113,9 @@ impl Tick {
 
     // See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
     // e.g., CSCO171117C00019000
-    pub fn name(&self) -> String {
-        self.name.clone()
+    pub fn name(&self) -> Rc<str> {
+        let s: &str = &self.name;
+        Rc::from(s)
     }
 
     #[allow(dead_code)]
