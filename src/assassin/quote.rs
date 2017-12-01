@@ -73,4 +73,8 @@ impl Quote {
     pub fn expiration_date(&self) -> DateTime<Utc> {
         self.expiration_date
     }
+
+    pub fn days_to_expiration(&self, current_date: DateTime<Utc>) -> i32 {
+        self.expiration_date.num_days_from_ce() - current_date.num_days_from_ce()
+    }
 }

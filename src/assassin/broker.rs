@@ -58,13 +58,52 @@ impl Broker {
     }
 
     #[allow(dead_code)]
-    pub fn underlying_price_for(&self, symbol: &str) -> &Money {
-        self.underlying_prices.get(symbol).unwrap()
+    pub fn underlying_price_for(&self, symbol: &str) -> Money {
+        *self.underlying_prices.get(symbol).unwrap()
     }
 
     // TODO: this should only return quotes for the desired symbol
     pub fn quotes_for(&self, _symbol: &str) -> Vec<&Quote> {
         self.quotes.iter().map(|(_, q)| q).collect()
+    }
+
+    pub fn nearest_quotes_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
+        if days < 0 {
+            panic!("days must be >= 0 (got: {})", days);
+        }
+
+        let all_quotes: Vec<&Quote> = self.quotes.iter().map(|(_, q)| q).collect();
+
+        let expiring_quotes: Vec<&Quote> = all_quotes
+            .into_iter()
+            .filter(|q| q.days_to_expiration(self.current_date()) > days)
+            .collect();
+
+        let days_to_expiration = expiring_quotes
+            .first()
+            .unwrap()
+            .days_to_expiration(self.current_date);
+
+        expiring_quotes
+            .into_iter()
+            .filter(|q| {
+                q.days_to_expiration(self.current_date) < days_to_expiration + 1
+            })
+            .collect()
+    }
+
+    pub fn calls_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
+        self.nearest_quotes_expiring_after_n_days(days)
+            .into_iter()
+            .filter(|q| q.is_call())
+            .collect()
+    }
+
+    pub fn puts_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
+        self.nearest_quotes_expiring_after_n_days(days)
+            .into_iter()
+            .filter(|q| q.is_put())
+            .collect()
     }
 
     pub fn call_quotes_for(&self, symbol: &str) -> Vec<&Quote> {

@@ -1,12 +1,52 @@
 use assassin::broker::Broker;
 use assassin::order::Order;
 use assassin::position::Position;
+use assassin::quote::Quote;
 use assassin::traits::*;
 
 extern crate chrono;
 use self::chrono::prelude::*;
 
+extern crate greenback;
+use greenback::Greenback as Money;
+
 static TICKER: &'static str = "AAPL";
+static DAYS_OUT: i32 = 45;
+
+pub fn n_strikes_above(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Option<&Quote> {
+    if strikes < 1 {
+        panic!("strikes must be > 0 (got: {})", strikes);
+    }
+
+    let mut res: Option<&Quote> = None;
+
+    for q in &quotes {
+        if q.strike_price() > price {
+            res = Some(q);
+            break;
+        }
+    }
+
+    res
+}
+
+pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Option<&Quote> {
+    if strikes < 1 {
+        panic!("strikes must be > 0 (got: {})", strikes);
+    }
+
+    let mut res: Option<&Quote> = None;
+
+    for q in &quotes {
+        if q.strike_price() < price {
+            res = Some(q);
+        } else {
+            break;
+        }
+    }
+
+    res
+}
 
 pub struct PMCC {}
 
@@ -18,6 +58,12 @@ impl PMCC {
     // --------------------------------------------------------------------------------------------
 
     fn look_for_new_position_to_open(&self, broker: &Broker) {
+        let quotes = broker.nearest_quotes_expiring_after_n_days(DAYS_OUT);
+
+        let candidate = n_strikes_above(quotes, 2, broker.underlying_price_for(TICKER));
+    }
+
+    fn manage_positions(&self, broker: &Broker, positions: Vec<&Position>) {
         // if let Some(order) = self.generate_open_order(broker) {
         //     broker.process_order(order); // TODO: check result
         // }
@@ -26,8 +72,6 @@ impl PMCC {
         //     broker.process_order(order); // TODO: check result
         // }
     }
-
-    fn manage_positions(&self, broker: &Broker, positions: Vec<&Position>) {}
 
     // --------------------------------------------------------------------------------------------
 
