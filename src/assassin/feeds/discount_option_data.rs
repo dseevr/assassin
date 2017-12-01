@@ -1,6 +1,5 @@
 use std::io::BufReader;
 use std::io::BufRead;
-use std::io::Lines;
 use std::fs::File;
 
 use assassin::tick::Tick;
@@ -13,19 +12,20 @@ extern crate greenback;
 use greenback::Greenback as Money;
 
 pub struct DiscountOptionData {
-    enumerator: Lines<BufReader<File>>,
+    enumerator: BufReader<File>,
+    line: String,
 }
 
 impl DiscountOptionData {
     pub fn new(filename: &'static str) -> DiscountOptionData {
-        let file = BufReader::new(File::open(filename).unwrap());
-        let enumerator = file.lines();
+        let enumerator = BufReader::new(File::open(filename).unwrap());
 
         // eat the header row
         // enumerator.next();
 
         DiscountOptionData {
             enumerator: enumerator,
+            line: String::with_capacity(128),
         }
     }
 }
@@ -42,20 +42,26 @@ impl DiscountOptionData {
 // ImpliedVolatility,Delta,Gamma,Vega,Rho,OpenInterest,UnderlyingPrice,DataDate
 // 2013-01-02
 
-
 impl DataFeed for DiscountOptionData {
     fn next_tick(&mut self) -> Option<Tick> {
-        let e = self.enumerator.next();
+        self.line.clear();
 
-        if e.is_none() {
+        let res = self.enumerator.read_line(&mut self.line);
+        if !res.is_ok() {
             return None;
         }
 
-        let l = e.unwrap().unwrap();
+        let len = self.line.len();
+
+        if len == 0 {
+            return None;
+        } else {
+            self.line.truncate(len - 1);
+        }
 
         // ----- split CSV and parse fields -------------------------------
 
-        let v: Vec<&str> = l.split(',').collect();
+        let v: Vec<&str> = self.line.split(',').collect();
         assert_eq!(v.len(), 18);
 
         let symbol = v[0].parse().unwrap();
