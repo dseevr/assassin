@@ -1,5 +1,6 @@
 use assassin::broker::Broker;
 use assassin::order::Order;
+use assassin::position::Position;
 use assassin::traits::*;
 
 extern crate chrono;
@@ -13,6 +14,22 @@ impl PMCC {
     pub fn new() -> PMCC {
         PMCC {}
     }
+
+    // --------------------------------------------------------------------------------------------
+
+    fn look_for_new_position_to_open(&self, broker: &Broker) {
+        // if let Some(order) = self.generate_open_order(broker) {
+        //     broker.process_order(order); // TODO: check result
+        // }
+
+        // if let Some(order) = self.generate_close_order(broker) {
+        //     broker.process_order(order); // TODO: check result
+        // }
+    }
+
+    fn manage_positions(&self, broker: &Broker, positions: Vec<&Position>) {}
+
+    // --------------------------------------------------------------------------------------------
 
     fn generate_open_order(&self, broker: &mut Broker) -> Option<Order> {
         if broker.open_positions().len() >= 5 {
@@ -32,35 +49,18 @@ impl PMCC {
         // Some(o)
         None
     }
-}
 
-impl Model for PMCC {
-    fn name(&self) -> &'static str {
-        "Poor Man's Covered Call"
-    }
-
-    fn before_simulation(&mut self, _broker: &mut Broker) {}
-
-    fn run_logic(&mut self, broker: &mut Broker) {
-        let current_date = broker.current_date();
-        let day = current_date.format("%Y-%m-%d");
-
+    fn show_header(&self, broker: &Broker) {
         println!(
             "===== start of {} ==================================================",
-            day
+            broker.current_date()
         );
         println!("");
+    }
 
-        // TODO: update any charts, indicators, etc.
-        // self.update_indicators(quotes);
-
-        if let Some(order) = self.generate_open_order(broker) {
-            broker.process_order(order); // TODO: check result
-        }
-
-        if let Some(order) = self.generate_close_order(broker) {
-            broker.process_order(order); // TODO: check result
-        }
+    fn show_summary(&self, broker: &Broker) {
+        let current_date = broker.current_date();
+        let day = current_date.format("%Y-%m-%d").to_string();
 
         // show summary for day
         println!("");
@@ -81,11 +81,34 @@ impl Model for PMCC {
                 "{} - {} contracts - Expires: {} days",
                 position.symbol(),
                 position.quantity(),
-                position.expiration_date().num_days_from_ce() - current_date.num_days_from_ce(),
+                position.expiration_date().num_days_from_ce()
+                    - broker.current_date().num_days_from_ce(),
             );
             println!("format: {}", position.expiration_date().format("%Y-%m-%d"));
         }
         println!("");
+    }
+}
+
+impl Model for PMCC {
+    fn name(&self) -> &'static str {
+        "Poor Man's Covered Call"
+    }
+
+    fn before_simulation(&mut self, _broker: &mut Broker) {}
+
+    fn run_logic(&mut self, broker: &mut Broker) {
+        self.show_header(broker);
+
+        let positions = broker.open_positions();
+
+        if positions.len() > 0 {
+            self.manage_positions(broker, positions);
+        } else {
+            self.look_for_new_position_to_open(broker);
+        }
+
+        self.show_summary(broker);
     }
 
     fn after_simulation(&mut self, broker: &mut Broker) {
