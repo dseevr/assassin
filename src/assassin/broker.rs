@@ -206,7 +206,7 @@ impl Broker {
                 println!("closing position {} due to expiration:", option_name);
 
                 let quote = self.quote_for(position.name()).unwrap();
-                let quantity = position.quantity();
+                let quantity = position.quantity().abs();
                 let action;
                 let price;
 
@@ -224,9 +224,10 @@ impl Broker {
                     Order::new_buy_close_order(&quote, quantity, price)
                 };
 
-                let commish = self.commission_schedule.commission_for(&order);
                 let mut filled_order = order;
-                filled_order.filled_at(quote.midpoint_price(), commish, &quote, self.current_date);
+                filled_order.filled_at(quote.midpoint_price(), &quote, self.current_date);
+                let commish = self.commission_schedule.commission_for(&filled_order);
+                filled_order.set_commission(commish);
 
                 let total = filled_order.margin_requirement(price) + commish;
 
@@ -284,18 +285,16 @@ impl Broker {
 
         // TODO: validate that the option_name in the order actually exists
 
-        let commish = self.commission_schedule.commission_for(&order);
-
         // TODO: actually look at the required limit on the order
         let fill_price = quote.midpoint_price();
         let required_margin = order.margin_requirement(fill_price);
 
         if order.is_buy() {
-            if required_margin + commish > self.balance {
+            // TODO: factor in commission here... probably not super important though
+            if required_margin > self.balance {
                 println!(
-                    "not enough money (need {} + {} commission, have {})",
+                    "not enough money (need {}, have {})",
                     required_margin,
-                    commish,
                     self.balance,
                 );
                 return false;
@@ -310,11 +309,14 @@ impl Broker {
         let mut filled_order = order;
 
         // fill the order and record it
-        filled_order.filled_at(fill_price, commish, &quote, self.current_date);
+        filled_order.filled_at(fill_price, &quote, self.current_date);
+
+        let commish = self.commission_schedule.commission_for(&filled_order);
+        filled_order.set_commission(commish);
 
         let cost_basis = filled_order.canonical_cost_basis();
-
         let key = filled_order.option_name();
+        let quantity = filled_order.quantity();
 
         let filled_order_rc = Rc::from(filled_order);
 
@@ -341,11 +343,12 @@ impl Broker {
             self.balance,
         );
         println!(
-            "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days",
+            "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days - {} contracts",
             self.underlying_price_for("AAPL"),
             quote.bid(),
             quote.ask(),
             quote.days_to_expiration(self.current_date),
+            quantity,
         );
 
         true

@@ -43,11 +43,14 @@ impl Order {
         }
     }
 
-    pub fn filled_at(&mut self, price: Money, commish: Money, quote: &Quote, date: DateTime<Utc>) {
+    pub fn filled_at(&mut self, price: Money, quote: &Quote, date: DateTime<Utc>) {
         self.quote = Some(quote.clone());
         self.fill_price = Some(price);
-        self.commission = Some(commish);
         self.filled_date = Some(date);
+    }
+
+    pub fn set_commission(&mut self, commish: Money) {
+        self.commission = Some(commish);
     }
 
     pub fn fill_price(&self) -> Money {

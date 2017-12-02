@@ -12,16 +12,20 @@ use greenback::Greenback as Money;
 
 static TICKER: &'static str = "AAPL";
 
+pub fn print_quote(q: &Quote, date: DateTime<Utc>) {
+    let call = q.is_call();
+    let strike = q.strike_price();
+    let bid = q.bid();
+    let ask = q.ask();
+    let t = if call { "C" } else { "P" };
+    let days = q.days_to_expiration(date);
+
+    println!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
+}
+
 pub fn print_chain(quotes: Vec<&Quote>, date: DateTime<Utc>) {
     for q in quotes {
-        let call = q.is_call();
-        let strike = q.strike_price();
-        let bid = q.bid();
-        let ask = q.ask();
-        let t = if call { "C" } else { "P" };
-        let days = q.days_to_expiration(date);
-
-        println!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
+        print_quote(q, date);
     }
 }
 
@@ -62,6 +66,9 @@ pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Optio
 
 static DAYS_OUT_MIN: i32 = 30;
 static DAYS_OUT_MAX: i32 = 40;
+static NUM_CONTRACTS: i32 = 10;
+static STRIKES_ABOVE: i32 = 1;
+static STRIKES_BELOW: i32 = 3;
 
 pub struct PMCC {}
 
@@ -73,7 +80,11 @@ impl PMCC {
     // --------------------------------------------------------------------------------------------
 
     fn look_for_new_position_to_open(&self, broker: &mut Broker) -> Vec<Order> {
+        let date = broker.current_date();
+        let underlying_price = broker.underlying_price_for(TICKER);
         let mut res = vec![];
+
+        // find upper call quote to sell
 
         println!("** Searching for candidate quote for upper call");
 
@@ -83,31 +94,40 @@ impl PMCC {
             .filter(|q| q.is_call())
             .collect();
 
-        print_chain(quotes.clone(), broker.current_date());
+        print_chain(quotes.clone(), date);
 
-        // TODO: get rid of clone
-        let quote = match n_strikes_above(quotes.clone(), 1, broker.underlying_price_for(TICKER)) {
-            Some(quote) => quote,
+        let quote = match n_strikes_above(quotes.clone(), STRIKES_ABOVE, underlying_price) {
+            Some(quote) => {
+                println!("** Found candidate:");
+                print_quote(quote, date);
+                quote
+            }
             None => {
                 println!("!! No quote found");
                 return vec![];
             }
         };
 
-        let o = Order::new_sell_open_order(quote, 10, quote.midpoint_price());
+        let o = Order::new_sell_open_order(quote, NUM_CONTRACTS, quote.midpoint_price());
         res.push(o);
+
+        // find lower call quote to buy
 
         println!("** Searching for candidate quote for lower call");
 
-        let quote = match n_strikes_below(quotes, 3, broker.underlying_price_for(TICKER)) {
-            Some(quote) => quote,
+        let quote = match n_strikes_below(quotes, STRIKES_BELOW, underlying_price) {
+            Some(quote) => {
+                println!("** Found candidate:");
+                print_quote(quote, date);
+                quote
+            }
             None => {
                 println!("!! No quote found");
                 return vec![];
             }
         };
 
-        let o = Order::new_buy_open_order(quote, 10, quote.midpoint_price());
+        let o = Order::new_buy_open_order(quote, NUM_CONTRACTS, quote.midpoint_price());
         res.push(o);
 
         res
@@ -126,7 +146,7 @@ impl Model for PMCC {
     fn before_simulation(&mut self, _broker: &mut Broker) {}
 
     fn run_logic(&mut self, broker: &mut Broker) {
-        let positions = broker.positions();
+        let positions = broker.open_positions();
 
         let orders = if positions.len() > 0 {
             println!("** Managing existing postitions");
