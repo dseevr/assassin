@@ -93,8 +93,10 @@ pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Optio
     None
 }
 
-static DAYS_OUT_MIN: i32 = 30;
-static DAYS_OUT_MAX: i32 = 40;
+static SHORT_DAYS_OUT_MIN: i32 = 30;
+static SHORT_DAYS_OUT_MAX: i32 = 40;
+static LONG_DAYS_OUT_MIN: i32 = 150;
+static LONG_DAYS_OUT_MAX: i32 = 200;
 static NUM_CONTRACTS: i32 = 5;
 static STRIKES_ABOVE: i32 = 2;
 static STRIKES_BELOW: i32 = 4;
@@ -108,10 +110,9 @@ impl PMCC {
 
     // --------------------------------------------------------------------------------------------
 
-    fn look_for_new_position_to_open(&self, broker: &mut Broker) -> Vec<Order> {
+    fn look_for_new_short_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
         let date = broker.current_date();
         let underlying_price = broker.underlying_price_for(TICKER);
-        let mut res = vec![];
 
         // find upper call quote to sell
 
@@ -121,7 +122,7 @@ impl PMCC {
         // );
 
         let quotes: Vec<&Quote> = broker
-            .nearest_quotes_expiring_between_n_days(DAYS_OUT_MIN, DAYS_OUT_MAX)
+            .nearest_quotes_expiring_between_n_days(SHORT_DAYS_OUT_MIN, SHORT_DAYS_OUT_MAX)
             .into_iter()
             .filter(|q| q.is_call())
             .collect();
@@ -136,12 +137,33 @@ impl PMCC {
             }
             None => {
                 // println!("!! No quote found");
-                return vec![];
+                return None;
             }
         };
 
         let o = Order::new_sell_open_order(quote, NUM_CONTRACTS, quote.midpoint_price());
-        res.push(o);
+
+        Some(o)
+    }
+
+    fn look_for_new_long_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
+        let date = broker.current_date();
+        let underlying_price = broker.underlying_price_for(TICKER);
+
+        // find upper call quote to sell
+
+        // println!(
+        //     "** Searching for candidate quote for upper call ({} strikes above)",
+        //     STRIKES_ABOVE
+        // );
+
+        let quotes: Vec<&Quote> = broker
+            .nearest_quotes_expiring_between_n_days(LONG_DAYS_OUT_MIN, LONG_DAYS_OUT_MAX)
+            .into_iter()
+            .filter(|q| q.is_call())
+            .collect();
+
+        // print_chain(quotes.clone(), date);
 
         // find lower call quote to buy
 
@@ -158,14 +180,13 @@ impl PMCC {
             }
             None => {
                 // println!("!! No quote found");
-                return vec![];
+                return None;
             }
         };
 
         let o = Order::new_buy_open_order(quote, NUM_CONTRACTS, quote.midpoint_price());
-        res.push(o);
 
-        res
+        Some(o)
     }
 
     fn manage_positions(&self, broker: &mut Broker, positions: Vec<Position>) -> Vec<Order> {
@@ -183,17 +204,52 @@ impl Model for PMCC {
     fn run_logic(&mut self, broker: &mut Broker) {
         let positions = broker.open_positions();
 
-        let orders = if positions.len() > 0 {
-            // println!("** Managing existing postitions");
-            self.manage_positions(broker, positions)
-        } else {
-            // println!("** Looking for new positions to open");
-            self.look_for_new_position_to_open(broker)
-        };
+        let mut orders = vec![];
 
-        for o in orders {
-            broker.process_order(o);
-        }
+        match positions.len() {
+            2 => {
+                // println!("** Managing existing positions");
+                orders = self.manage_positions(broker, positions);
+
+                for o in orders {
+                    broker.process_order(o);
+                }
+            }
+            1 => {
+                if positions[0].is_long() {
+                    // println!("** Opening new short position");
+                    if let Some(o) = self.look_for_new_short_position_to_open(broker) {
+                        orders.push(o);
+                    }
+                } else {
+                    if let Some(o) = self.look_for_new_long_position_to_open(broker) {
+                        orders.push(o);
+                    }
+                }
+
+                for o in orders {
+                    broker.process_order(o);
+                }
+            }
+            0 => {
+                // println!("** Looking for new positions to open");
+                if let Some(o) = self.look_for_new_short_position_to_open(broker) {
+                    orders.push(o);
+                }
+
+                if let Some(o) = self.look_for_new_long_position_to_open(broker) {
+                    orders.push(o);
+                }
+
+                // only process orders if we found candidates for both
+                if orders.len() == 2 {
+                    for o in orders {
+                        broker.process_order(o);
+                    }
+                }
+            }
+            _ => panic!("unexpected number of positions: {}", positions.len()),
+        };
     }
 
     fn after_simulation(&mut self, broker: &mut Broker) {
