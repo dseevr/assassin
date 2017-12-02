@@ -34,16 +34,30 @@ pub fn n_strikes_above(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Optio
         panic!("strikes must be > 0 (got: {})", strikes);
     }
 
-    let mut res: Option<&Quote> = None;
+    let mut found = false;
+    let mut count = 0;
 
     for q in &quotes {
-        if q.strike_price() > price {
-            res = Some(q);
-            break;
+        // if we have found the strike above the underlying...
+        if found {
+            count += 1;
+
+            if count == strikes {
+                return Some(q);
+            } else {
+                if count > strikes {
+                    return None; // didn't find anything
+                }
+            }
+        } else {
+            if q.strike_price() > price {
+                found = true;
+                count = 1; // 1 strike above
+            }
         }
     }
 
-    res
+    None
 }
 
 pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Option<&Quote> {
@@ -51,24 +65,39 @@ pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Optio
         panic!("strikes must be > 0 (got: {})", strikes);
     }
 
-    let mut res: Option<&Quote> = None;
+    let mut found = false;
+    let mut count = 0;
 
-    for q in &quotes {
-        if q.strike_price() < price {
-            res = Some(q);
+    let mut reversed_quotes = quotes.clone();
+    reversed_quotes.reverse();
+
+    for q in &reversed_quotes {
+        if found {
+            count += 1;
+
+            if count == strikes {
+                return Some(q);
+            } else {
+                if count > strikes {
+                    return None;
+                }
+            }
         } else {
-            break;
+            if q.strike_price() < price {
+                found = true;
+                count = 1;
+            }
         }
     }
 
-    res
+    None
 }
 
 static DAYS_OUT_MIN: i32 = 30;
 static DAYS_OUT_MAX: i32 = 40;
-static NUM_CONTRACTS: i32 = 10;
-static STRIKES_ABOVE: i32 = 1;
-static STRIKES_BELOW: i32 = 3;
+static NUM_CONTRACTS: i32 = 5;
+static STRIKES_ABOVE: i32 = 2;
+static STRIKES_BELOW: i32 = 4;
 
 pub struct PMCC {}
 
@@ -86,7 +115,10 @@ impl PMCC {
 
         // find upper call quote to sell
 
-        // println!("** Searching for candidate quote for upper call");
+        // println!(
+        //     "** Searching for candidate quote for upper call ({} strikes above)",
+        //     STRIKES_ABOVE
+        // );
 
         let quotes: Vec<&Quote> = broker
             .nearest_quotes_expiring_between_n_days(DAYS_OUT_MIN, DAYS_OUT_MAX)
@@ -113,7 +145,10 @@ impl PMCC {
 
         // find lower call quote to buy
 
-        // println!("** Searching for candidate quote for lower call");
+        // println!(
+        //     "** Searching for candidate quote for lower call ({} strikes below)",
+        //     STRIKES_BELOW
+        // );
 
         let quote = match n_strikes_below(quotes, STRIKES_BELOW, underlying_price) {
             Some(quote) => {
