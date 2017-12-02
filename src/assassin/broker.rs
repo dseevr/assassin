@@ -27,6 +27,12 @@ pub struct Broker {
     ticks_processed: i64,
     quote_map_capacity: usize,
     underlying_prices: FnvHashMap<Rc<str>, Money>,
+
+    // statistics for simulation
+    highest_account_balance: Money,
+    lowest_account_balance: Money,
+
+    // TODO: add vars for realized and unrealized high/low balances
 }
 
 impl Broker {
@@ -54,10 +60,31 @@ impl Broker {
             ticks_processed: 0,
             quote_map_capacity: 0,
             underlying_prices: FnvHashMap::default(),
+            highest_account_balance: initial_balance,
+            lowest_account_balance: initial_balance,
         }
     }
 
-    #[allow(dead_code)]
+    pub fn highest_account_balance(&self) -> Money {
+        self.highest_account_balance
+    }
+
+    pub fn lowest_account_balance(&self) -> Money {
+        self.lowest_account_balance
+    }
+
+    pub fn update_statistics(&mut self) {
+        // TODO: get this working with the current balance factoring in all open positions
+        // let current_value: Money = self.positions().iter().map(|p| p.current_value()).sum();
+        let current_value = self.balance;
+
+        if current_value > self.highest_account_balance {
+            self.highest_account_balance = current_value;
+        } else if current_value < self.lowest_account_balance {
+            self.lowest_account_balance = current_value;
+        }
+    }
+
     pub fn underlying_price_for(&self, symbol: &str) -> Money {
         *self.underlying_prices.get(symbol).unwrap()
     }
@@ -167,6 +194,8 @@ impl Broker {
                 // we reset the quotes so that the last trading day's quotes
                 // are used when closing positions.
                 self.close_expired_positions();
+
+                self.update_statistics();
 
                 let key_count = self.quotes.keys().len();
 

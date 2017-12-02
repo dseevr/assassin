@@ -118,6 +118,14 @@ impl Simulation {
             commish_percent_of_profit,
         );
         println!("Average commission per order: {}", average_commission);
+        println!(
+            "Highest account balance: {}",
+            self.broker.highest_account_balance()
+        );
+        println!(
+            "Lowest account balance: {}",
+            self.broker.lowest_account_balance()
+        );
         println!("");
 
         let ticks_per_sec = self.broker.ticks_processed() as f32 / self.total_run_time();

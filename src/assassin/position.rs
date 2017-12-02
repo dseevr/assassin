@@ -109,4 +109,8 @@ impl Position {
         // model's logic has run.
         self.expiration_date.num_days_from_ce() < current_date.num_days_from_ce()
     }
+
+    pub fn current_value(&self) -> Money {
+        self.orders.iter().map(|o| o.canonical_cost_basis()).sum()
+    }
 }

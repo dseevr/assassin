@@ -86,7 +86,7 @@ impl PMCC {
 
         // find upper call quote to sell
 
-        println!("** Searching for candidate quote for upper call");
+        // println!("** Searching for candidate quote for upper call");
 
         let quotes: Vec<&Quote> = broker
             .nearest_quotes_expiring_between_n_days(DAYS_OUT_MIN, DAYS_OUT_MAX)
@@ -94,16 +94,16 @@ impl PMCC {
             .filter(|q| q.is_call())
             .collect();
 
-        print_chain(quotes.clone(), date);
+        // print_chain(quotes.clone(), date);
 
         let quote = match n_strikes_above(quotes.clone(), STRIKES_ABOVE, underlying_price) {
             Some(quote) => {
-                println!("** Found candidate:");
-                print_quote(quote, date);
+                // println!("** Found candidate:");
+                // print_quote(quote, date);
                 quote
             }
             None => {
-                println!("!! No quote found");
+                // println!("!! No quote found");
                 return vec![];
             }
         };
@@ -113,16 +113,16 @@ impl PMCC {
 
         // find lower call quote to buy
 
-        println!("** Searching for candidate quote for lower call");
+        // println!("** Searching for candidate quote for lower call");
 
         let quote = match n_strikes_below(quotes, STRIKES_BELOW, underlying_price) {
             Some(quote) => {
-                println!("** Found candidate:");
-                print_quote(quote, date);
+                // println!("** Found candidate:");
+                // print_quote(quote, date);
                 quote
             }
             None => {
-                println!("!! No quote found");
+                // println!("!! No quote found");
                 return vec![];
             }
         };
@@ -149,10 +149,10 @@ impl Model for PMCC {
         let positions = broker.open_positions();
 
         let orders = if positions.len() > 0 {
-            println!("** Managing existing postitions");
+            // println!("** Managing existing postitions");
             self.manage_positions(broker, positions)
         } else {
-            println!("** Looking for new positions to open");
+            // println!("** Looking for new positions to open");
             self.look_for_new_position_to_open(broker)
         };
 
@@ -169,8 +169,9 @@ impl Model for PMCC {
 
     fn show_bod_header(&self, broker: &Broker) {
         println!(
-            "===== start of {} ==================================================",
-            broker.current_date()
+            "===== start of {} ======= Balance: {} =================",
+            broker.current_date(),
+            broker.account_balance(),
         );
         println!("");
     }
