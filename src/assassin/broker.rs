@@ -67,44 +67,47 @@ impl Broker {
         self.quotes.iter().map(|(_, q)| q).collect()
     }
 
-    pub fn nearest_quotes_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
-        if days < 0 {
-            panic!("days must be >= 0 (got: {})", days);
+    pub fn nearest_quotes_expiring_between_n_days(&self, min: i32, max: i32) -> Vec<&Quote> {
+        if min < 0 {
+            panic!("min must be >= 0 (got: {})", min);
         }
 
-        let all_quotes: Vec<&Quote> = self.quotes.iter().map(|(_, q)| q).collect();
+        if min > max {
+            panic!("min must be > max (got: min {} and max {})", min, max);
+        }
 
-        let expiring_quotes: Vec<&Quote> = all_quotes
-            .into_iter()
-            .filter(|q| q.days_to_expiration(self.current_date()) > days)
-            .collect();
+        let date = self.current_date;
 
-        let days_to_expiration = expiring_quotes
-            .first()
-            .unwrap()
-            .days_to_expiration(self.current_date);
-
-        expiring_quotes
+        let mut expiring_quotes: Vec<&Quote> = self.quotes
+            .iter()
+            .map(|(_, q)| q)
             .into_iter()
             .filter(|q| {
-                q.days_to_expiration(self.current_date) < days_to_expiration + 1
+                // TODO: should these be >= and <= ?
+                q.days_to_expiration(date) > min && q.days_to_expiration(date) < max
             })
-            .collect()
+            .collect();
+
+        expiring_quotes.sort_by_key(|a| {
+            (a.days_to_expiration(date), a.is_call(), a.strike_price())
+        });
+
+        expiring_quotes
     }
 
-    pub fn calls_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
-        self.nearest_quotes_expiring_after_n_days(days)
-            .into_iter()
-            .filter(|q| q.is_call())
-            .collect()
-    }
+    // pub fn calls_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
+    //     self.nearest_quotes_expiring_after_n_days(days)
+    //         .into_iter()
+    //         .filter(|q| q.is_call())
+    //         .collect()
+    // }
 
-    pub fn puts_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
-        self.nearest_quotes_expiring_after_n_days(days)
-            .into_iter()
-            .filter(|q| q.is_put())
-            .collect()
-    }
+    // pub fn puts_expiring_after_n_days(&self, days: i32) -> Vec<&Quote> {
+    //     self.nearest_quotes_expiring_after_n_days(days)
+    //         .into_iter()
+    //         .filter(|q| q.is_put())
+    //         .collect()
+    // }
 
     pub fn call_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
         let mut quotes: Vec<&Quote> = self.quotes_for(symbol)

@@ -11,7 +11,19 @@ extern crate greenback;
 use greenback::Greenback as Money;
 
 static TICKER: &'static str = "AAPL";
-static DAYS_OUT: i32 = 45;
+
+pub fn print_chain(quotes: Vec<&Quote>, date: DateTime<Utc>) {
+    for q in quotes {
+        let call = q.is_call();
+        let strike = q.strike_price();
+        let bid = q.bid();
+        let ask = q.ask();
+        let t = if call { "C" } else { "P" };
+        let days = q.days_to_expiration(date);
+
+        println!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
+    }
+}
 
 pub fn n_strikes_above(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Option<&Quote> {
     if strikes < 1 {
@@ -48,6 +60,9 @@ pub fn n_strikes_below(quotes: Vec<&Quote>, strikes: i32, price: Money) -> Optio
     res
 }
 
+static DAYS_OUT_MIN: i32 = 30;
+static DAYS_OUT_MAX: i32 = 40;
+
 pub struct PMCC {}
 
 impl PMCC {
@@ -63,13 +78,15 @@ impl PMCC {
         println!("** Searching for candidate quote for upper call");
 
         let quotes: Vec<&Quote> = broker
-            .nearest_quotes_expiring_after_n_days(DAYS_OUT)
+            .nearest_quotes_expiring_between_n_days(DAYS_OUT_MIN, DAYS_OUT_MAX)
             .into_iter()
             .filter(|q| q.is_call())
             .collect();
 
+        print_chain(quotes.clone(), broker.current_date());
+
         // TODO: get rid of clone
-        let quote = match n_strikes_above(quotes.clone(), 2, broker.underlying_price_for(TICKER)) {
+        let quote = match n_strikes_above(quotes.clone(), 1, broker.underlying_price_for(TICKER)) {
             Some(quote) => quote,
             None => {
                 println!("!! No quote found");
@@ -82,7 +99,7 @@ impl PMCC {
 
         println!("** Searching for candidate quote for lower call");
 
-        let quote = match n_strikes_below(quotes, 4, broker.underlying_price_for(TICKER)) {
+        let quote = match n_strikes_below(quotes, 3, broker.underlying_price_for(TICKER)) {
             Some(quote) => quote,
             None => {
                 println!("!! No quote found");
