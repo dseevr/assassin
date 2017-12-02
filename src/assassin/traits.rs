@@ -18,4 +18,6 @@ pub trait Model {
     fn before_simulation(&mut self, &mut Broker);
     fn after_simulation(&mut self, &mut Broker);
     fn run_logic(&mut self, &mut Broker);
+    fn show_bod_header(&self, &Broker);
+    fn show_eod_summary(&self, &Broker);
 }

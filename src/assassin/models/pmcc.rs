@@ -57,44 +57,80 @@ impl PMCC {
 
     // --------------------------------------------------------------------------------------------
 
-    fn look_for_new_position_to_open(&self, broker: &Broker) {
-        let quotes = broker.nearest_quotes_expiring_after_n_days(DAYS_OUT);
+    fn look_for_new_position_to_open(&self, broker: &mut Broker) -> Vec<Order> {
+        let mut res = vec![];
 
-        let candidate = n_strikes_above(quotes, 2, broker.underlying_price_for(TICKER));
-    }
+        println!("** Searching for candidate quote for upper call");
 
-    fn manage_positions(&self, broker: &Broker, positions: Vec<&Position>) {
-        // if let Some(order) = self.generate_open_order(broker) {
-        //     broker.process_order(order); // TODO: check result
-        // }
+        let quotes: Vec<&Quote> = broker
+            .nearest_quotes_expiring_after_n_days(DAYS_OUT)
+            .into_iter()
+            .filter(|q| q.is_call())
+            .collect();
 
-        // if let Some(order) = self.generate_close_order(broker) {
-        //     broker.process_order(order); // TODO: check result
-        // }
-    }
+        // TODO: get rid of clone
+        let quote = match n_strikes_above(quotes.clone(), 2, broker.underlying_price_for(TICKER)) {
+            Some(quote) => quote,
+            None => {
+                println!("!! No quote found");
+                return vec![];
+            }
+        };
 
-    // --------------------------------------------------------------------------------------------
+        let o = Order::new_sell_open_order(quote, 10, quote.midpoint_price());
+        res.push(o);
 
-    fn generate_open_order(&self, broker: &mut Broker) -> Option<Order> {
-        if broker.open_positions().len() >= 5 {
-            return None;
-        }
+        println!("** Searching for candidate quote for lower call");
 
-        let quote = &broker.call_quotes_for(TICKER)[0];
+        let quote = match n_strikes_below(quotes, 4, broker.underlying_price_for(TICKER)) {
+            Some(quote) => quote,
+            None => {
+                println!("!! No quote found");
+                return vec![];
+            }
+        };
 
         let o = Order::new_buy_open_order(quote, 10, quote.midpoint_price());
+        res.push(o);
 
-        Some(o)
+        res
     }
 
-    fn generate_close_order(&self, _broker: &mut Broker) -> Option<Order> {
-        // let o = Order::new_sell_close_order("AAPL".to_string(), 15.0, 100, 2.0);
+    fn manage_positions(&self, broker: &mut Broker, positions: Vec<Position>) -> Vec<Order> {
+        vec![]
+    }
+}
 
-        // Some(o)
-        None
+impl Model for PMCC {
+    fn name(&self) -> &'static str {
+        "Poor Man's Covered Call"
     }
 
-    fn show_header(&self, broker: &Broker) {
+    fn before_simulation(&mut self, _broker: &mut Broker) {}
+
+    fn run_logic(&mut self, broker: &mut Broker) {
+        let positions = broker.positions();
+
+        let orders = if positions.len() > 0 {
+            println!("** Managing existing postitions");
+            self.manage_positions(broker, positions)
+        } else {
+            println!("** Looking for new positions to open");
+            self.look_for_new_position_to_open(broker)
+        };
+
+        for o in orders {
+            broker.process_order(o);
+        }
+    }
+
+    fn after_simulation(&mut self, broker: &mut Broker) {
+        // run again to handle the last day's data since
+        // we won't be notified of it by the broker
+        self.run_logic(broker);
+    }
+
+    fn show_bod_header(&self, broker: &Broker) {
         println!(
             "===== start of {} ==================================================",
             broker.current_date()
@@ -102,7 +138,7 @@ impl PMCC {
         println!("");
     }
 
-    fn show_summary(&self, broker: &Broker) {
+    fn show_eod_summary(&self, broker: &Broker) {
         let current_date = broker.current_date();
         let day = current_date.format("%Y-%m-%d").to_string();
 
@@ -131,33 +167,5 @@ impl PMCC {
             println!("format: {}", position.expiration_date().format("%Y-%m-%d"));
         }
         println!("");
-    }
-}
-
-impl Model for PMCC {
-    fn name(&self) -> &'static str {
-        "Poor Man's Covered Call"
-    }
-
-    fn before_simulation(&mut self, _broker: &mut Broker) {}
-
-    fn run_logic(&mut self, broker: &mut Broker) {
-        self.show_header(broker);
-
-        let positions = broker.open_positions();
-
-        if positions.len() > 0 {
-            self.manage_positions(broker, positions);
-        } else {
-            self.look_for_new_position_to_open(broker);
-        }
-
-        self.show_summary(broker);
-    }
-
-    fn after_simulation(&mut self, broker: &mut Broker) {
-        // run again to handle the last day's data since
-        // we won't be notified of it by the broker
-        self.run_logic(broker);
     }
 }

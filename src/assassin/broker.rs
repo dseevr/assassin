@@ -273,7 +273,7 @@ impl Broker {
         // TODO: exit cleanly instead of exploding?
         let quote = self.quote_for(order.option_name()).unwrap();
 
-        println!("Order received: {}", order.summary());
+        // println!("Order received: {}", order.summary());
 
         // TODO: ensure that days remaining is > 0
         //       since we only buy at end of day, if there are no days left
@@ -301,6 +301,9 @@ impl Broker {
 
         // ----- fill the order ------------------------------------------------------
 
+        let sign = if order.is_buy() { ">>" } else { "<<" };
+        let call = if quote.is_call() { "CALL" } else { "PUT" };
+
         let mut filled_order = order;
 
         // fill the order and record it
@@ -326,11 +329,20 @@ impl Broker {
         self.balance -= commish;
         self.commission_paid += commish;
 
+        println!("{} {} ORDER FILLED.", sign, call);
         println!(
-            "ORDER FILLED. Commission: {} - Old balance: {} - New balance: {}",
+            "Strike: {} - Commission: {} - Old balance: {} - New balance: {}",
+            quote.strike_price(),
             commish,
             original_balance,
             self.balance,
+        );
+        println!(
+            "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days",
+            self.underlying_price_for("AAPL"),
+            quote.bid(),
+            quote.ask(),
+            quote.days_to_expiration(self.current_date),
         );
 
         true
@@ -338,18 +350,32 @@ impl Broker {
 
     // TODO: maybe don't sort this all the time?
     //       open_positions() consumes this after it's sorted, etc.
-    pub fn positions(&self) -> Vec<&Position> {
-        let mut ps: Vec<&Position> = self.positions.iter().map(|(_, p)| p).collect();
+    pub fn positions(&self) -> Vec<Position> {
+        let mut ps: Vec<Position> = self.positions.clone().into_iter().map(|(_, p)| p).collect();
         ps.sort_by(|a, b| a.name().cmp(&b.name()));
         ps
     }
 
-    pub fn open_positions(&self) -> Vec<&Position> {
+    pub fn open_positions(&self) -> Vec<Position> {
         self.positions()
             .into_iter()
             .filter(|p| p.is_open())
             .collect()
     }
+
+    // TODO: switch back to reference version once pmcc.rs isn't borrowing mutably and immutably
+    // pub fn positions(&self) -> Vec<&Position> {
+    //     let mut ps: Vec<&Position> = self.positions.iter().map(|(_, p)| p).collect();
+    //     ps.sort_by(|a, b| a.name().cmp(&b.name()));
+    //     ps
+    // }
+
+    // pub fn open_positions(&self) -> Vec<&Position> {
+    //     self.positions()
+    //         .into_iter()
+    //         .filter(|p| p.is_open())
+    //         .collect()
+    // }
 
     pub fn total_order_count(&self) -> i32 {
         self.orders.len() as i32
