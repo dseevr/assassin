@@ -257,6 +257,7 @@ impl Broker {
                 filled_order.filled_at(quote.midpoint_price(), &quote, self.current_date);
                 let commish = self.commission_schedule.commission_for(&filled_order);
                 filled_order.set_commission(commish);
+                filled_order.set_closed_by_broker();
 
                 let total = filled_order.margin_requirement(price) + commish;
 

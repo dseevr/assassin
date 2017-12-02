@@ -33,6 +33,14 @@ impl Position {
         }
     }
 
+    pub fn broker_closed_order_count(&self) -> i32 {
+        self.orders
+            .iter()
+            .filter(|o| o.closed_by_broker())
+            .collect::<Vec<&Rc<Order>>>()
+            .len() as i32
+    }
+
     // OPTIMIZE: this can be updated when orders are applied
     pub fn realized_profit(&self) -> Money {
         self.orders.iter().fold(Money::zero(), |sum, o|

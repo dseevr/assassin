@@ -24,6 +24,8 @@ pub struct Order {
     fill_price: Option<Money>,
     commission: Option<Money>,
     filled_date: Option<DateTime<Utc>>, // open date could have been in the past if GTC
+
+    closed_by_broker: bool,
 }
 
 impl Order {
@@ -34,6 +36,10 @@ impl Order {
     #[allow(dead_code)]
     pub fn is_sell(&self) -> bool {
         !self.is_buy()
+    }
+
+    pub fn closed_by_broker(&self) -> bool {
+        self.closed_by_broker
     }
 
     pub fn commission(&self) -> Money {
@@ -84,6 +90,10 @@ impl Order {
         Rc::clone(&self.name)
     }
 
+    pub fn set_closed_by_broker(&mut self) {
+        self.closed_by_broker = true;
+    }
+
     // TODO: order expiration date would be the ORDER'S expiration date
     //       good til canceled, day only, etc.
     // pub fn expiration_date(&self) -> DateTime<Utc> {
@@ -113,6 +123,7 @@ impl Order {
             commission: None,
             quote: None,
             filled_date: None,
+            closed_by_broker: false,
         }
     }
 

@@ -101,6 +101,13 @@ impl Simulation {
 
         let order_counts: Vec<i32> = positions.iter().map(|p| p.order_count()).collect();
         let total_order_count: i32 = order_counts.iter().sum();
+        let broker_closed_order_count: i32 = positions
+            .iter()
+            .map(|p| p.broker_closed_order_count())
+            .sum();
+
+        let broker_closed_percent =
+            (broker_closed_order_count as f32 / total_order_count as f32) * 100.0;
 
         let average_commission = {
             if total_order_count > 0 {
@@ -112,6 +119,11 @@ impl Simulation {
 
         println!("Capital growth: {:.2}%", capital_growth);
         println!("Total orders: {}", total_order_count);
+        println!(
+            "Orders closed by broker: {} ({:.2}%)",
+            broker_closed_order_count,
+            broker_closed_percent,
+        );
         println!(
             "Commission paid: {} ({:.2}% of profit)",
             total_commish,
