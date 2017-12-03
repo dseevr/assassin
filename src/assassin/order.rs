@@ -225,6 +225,82 @@ impl Order {
             quote.ask()
         };
 
-        price * self.quantity
+        price * 100 * self.quantity
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    fn dummy_quote(bid: Money, ask: Money) -> Quote {
+        Quote::new(
+            "symbol".to_string(), // symbol
+            Utc::now(),           // expiration date
+            ask,                  // ask
+            bid,                  // bid
+            Money::new(1, 0),     // last_price
+            true,                 // call
+            Money::new(100, 0),   // strike_price
+            0,                    // volume
+            0.0,                  // IV
+            0.0,                  // delta
+            0.0,                  // gamma
+            0.0,                  // vega
+            0,                    // open interest
+            Money::new(101, 0),   // underlying
+            Utc::now(),           // date (of quote)
+        )
+    }
+
+    fn filled_order(quote: &Quote) -> Order {
+        Order {
+            symbol: quote.symbol(),
+            name: quote.name(),
+            buy: true,
+            open: true,
+            quantity: 10,
+            limit: Money::new(1, 0),
+            strike_price: Money::new(1, 0),
+            quote: Some(quote.clone()),
+            fill_price: Some(quote.ask()),
+            commission: Some(Money::zero()),
+            filled_date: Some(Utc::now()),
+            closed_by_broker: false,
+        }
+    }
+
+    #[test]
+    fn test_unrealized_value() {
+        let m1 = Money::new(1, 1);
+        let m2 = Money::new(1, 2);
+
+        let q1 = dummy_quote(m1, m2); // bought at 1.02
+        let q2 = dummy_quote(Money::new(1, 3), Money::new(1, 4)); // selling at 1.02
+
+        let o = filled_order(&q1);
+
+        let cost_basis = o.cost_basis();
+        let unrealized = o.unrealized_value(&q1);
+        let profit = o.unrealized_value(&q2) - o.cost_basis();
+
+        println!(
+            "cost_basis: {} unrealized: {} profit: {}",
+            cost_basis,
+            unrealized,
+            profit
+        );
+
+        let d = m2 - m1;
+        let difference = d * 100 * 10; // 10 contracts (from dummy_quote())
+
+        println!("d: {} difference: {}", d, difference);
+
+        println!("{} == {} ?", cost_basis - difference, unrealized);
+        assert!(cost_basis - difference == unrealized); // selling immediately is a $0.01/share loss
+
+        println!("profit: {} == {} ?", profit, difference);
+        assert!(profit == difference); // selling at q2 is a $0.01/share profit
     }
 }
