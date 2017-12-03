@@ -36,10 +36,6 @@ impl Simulation {
         self.broker.process_simulation_data(&mut *self.model);
 
         self.model.after_simulation(&mut *self.broker);
-
-        // do this after after_simulation to allow for EOD data to have a chance
-        // to do something on the last day of data
-        self.broker.close_all_positions();
     }
 
     pub fn print_stats(&self) {

@@ -242,11 +242,7 @@ impl Model for PMCC {
         };
     }
 
-    fn after_simulation(&mut self, broker: &mut Broker) {
-        // run again to handle the last day's data since
-        // we won't be notified of it by the broker
-        self.run_logic(broker);
-    }
+    fn after_simulation(&mut self, _broker: &mut Broker) {}
 
     fn show_bod_header(&self, broker: &Broker) {
         println!(

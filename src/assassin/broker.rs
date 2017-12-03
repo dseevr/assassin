@@ -33,6 +33,7 @@ pub struct Broker {
     lowest_realized_account_balance: Money,
     highest_unrealized_account_balance: Money,
     lowest_unrealized_account_balance: Money,
+    final_unrealized_account_balance: Money,
 
     // TODO: add vars for realized and unrealized high/low balances
 }
@@ -66,6 +67,7 @@ impl Broker {
             lowest_realized_account_balance: initial_balance,
             highest_unrealized_account_balance: initial_balance,
             lowest_unrealized_account_balance: initial_balance,
+            final_unrealized_account_balance: initial_balance,
         }
     }
 
@@ -95,6 +97,8 @@ impl Broker {
         }
 
         let current_unrealized_value = self.unrealized_account_balance();
+
+        println!("current unrealized: {}", current_unrealized_value);
 
         if current_unrealized_value > self.highest_unrealized_account_balance {
             self.highest_unrealized_account_balance = current_unrealized_value;
@@ -240,6 +244,8 @@ impl Broker {
 
             self.quotes_processed += 1;
         }
+
+        self.final_unrealized_account_balance = self.unrealized_account_balance();
 
         self.close_all_positions();
     }
@@ -451,7 +457,61 @@ impl Broker {
     }
 
     pub fn close_all_positions(&mut self) {
-        println!("TODO: close all open positions at last price");
-        println!("");
+        let mut orders = vec![];
+
+        for (option_name, position) in &self.positions {
+            if position.is_closed() {
+                continue;
+            }
+
+            println!("closing position {} due to end of data feed:", option_name);
+
+            let quote = self.quote_for(position.name()).unwrap();
+            let quantity = position.quantity().abs();
+            let action;
+            let price;
+
+            // TODO: call OrderFiller's logic here
+
+            let order = if position.is_long() {
+                action = "sell";
+                price = quote.bid();
+
+                Order::new_sell_close_order(&quote, quantity, price)
+            } else {
+                action = "buy";
+                price = quote.ask();
+
+                Order::new_buy_close_order(&quote, quantity, price)
+            };
+
+            let mut filled_order = order;
+            filled_order.filled_at(quote.midpoint_price(), &quote, self.current_date);
+            let commish = self.commission_schedule.commission_for(&filled_order);
+            filled_order.set_commission(commish);
+            filled_order.set_closed_by_broker();
+
+            let total = filled_order.margin_requirement(price) + commish;
+
+            println!(
+                "  {}ing contracts @ {} + {} commission ({} total)",
+                action,
+                filled_order.fill_price(),
+                commish,
+                total,
+            );
+
+            orders.push(filled_order);
+        }
+
+        let count = orders.len();
+
+        for order in orders {
+            if !self.process_order(order) {
+                panic!("failed to process_order... margin call?");
+            }
+        }
+
+        println!("Closed {} positions", count);
     }
 }

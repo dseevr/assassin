@@ -105,6 +105,12 @@ impl Position {
     }
 
     pub fn is_open(&self) -> bool {
+        // TODO: why is calling is_filled() crashing?
+        // let closed_count = self.orders.iter().map(|o| o.is_filled()).len();
+        // let open_count = self.orders.len() - closed_count;
+
+        // open_count != closed_count
+
         let mut open = 0;
         let mut closed = 0;
 
@@ -136,9 +142,17 @@ impl Position {
 
     #[allow(dead_code)]
     pub fn current_value(&self, current_quote: &Quote) -> Money {
+        println!("==========================================================");
         self.orders
             .iter()
-            .map(|o| o.unrealized_value(current_quote))
+            .map(|o| {
+                let x = o.unrealized_value(current_quote);
+                println!("x: {}", x);
+                // TODO: print order deets
+                // println!("{}", o.summary());
+                println!("");
+                x
+            })
             .sum()
     }
 }

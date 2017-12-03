@@ -23,12 +23,16 @@ pub struct Order {
     quote: Option<Quote>,
     fill_price: Option<Money>,
     commission: Option<Money>,
-    filled_date: Option<DateTime<Utc>>, // open date could have been in the past if GTC
+    filled_date: Option<DateTime<Utc>>, // TOOD: open date could have been in the past if GTC
 
     closed_by_broker: bool,
 }
 
 impl Order {
+    pub fn is_filled(&self) -> bool {
+        self.fill_price.is_some()
+    }
+
     pub fn is_buy(&self) -> bool {
         self.buy
     }
@@ -225,7 +229,7 @@ impl Order {
             quote.ask()
         };
 
-        price * 100 * self.quantity
+        price * 100 * self.canonical_quantity()
     }
 }
 
