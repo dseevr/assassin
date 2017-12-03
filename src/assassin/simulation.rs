@@ -138,6 +138,14 @@ impl Simulation {
             "Lowest realized account balance: {}",
             self.broker.lowest_realized_account_balance()
         );
+        println!(
+            "Highest unrealized account balance: {}",
+            self.broker.highest_unrealized_account_balance()
+        );
+        println!(
+            "Lowest unrealized account balance: {}",
+            self.broker.lowest_unrealized_account_balance()
+        );
         println!("");
 
         let ticks_per_sec = self.broker.ticks_processed() as f32 / self.total_run_time();

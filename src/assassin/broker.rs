@@ -31,6 +31,8 @@ pub struct Broker {
     // statistics for simulation
     highest_realized_account_balance: Money,
     lowest_realized_account_balance: Money,
+    highest_unrealized_account_balance: Money,
+    lowest_unrealized_account_balance: Money,
 
     // TODO: add vars for realized and unrealized high/low balances
 }
@@ -62,6 +64,8 @@ impl Broker {
             underlying_prices: FnvHashMap::default(),
             highest_realized_account_balance: initial_balance,
             lowest_realized_account_balance: initial_balance,
+            highest_unrealized_account_balance: initial_balance,
+            lowest_unrealized_account_balance: initial_balance,
         }
     }
 
@@ -73,15 +77,29 @@ impl Broker {
         self.lowest_realized_account_balance
     }
 
+    pub fn highest_unrealized_account_balance(&self) -> Money {
+        self.highest_realized_account_balance
+    }
+
+    pub fn lowest_unrealized_account_balance(&self) -> Money {
+        self.lowest_realized_account_balance
+    }
+
     pub fn update_statistics(&mut self) {
-        // TODO: get this working with the current balance factoring in all open positions
-        // let current_value: Money = self.positions().iter().map(|p| p.current_value()).sum();
         let current_value = self.balance;
 
         if current_value > self.highest_realized_account_balance {
             self.highest_realized_account_balance = current_value;
         } else if current_value < self.lowest_realized_account_balance {
             self.lowest_realized_account_balance = current_value;
+        }
+
+        let current_unrealized_value = self.unrealized_account_balance();
+
+        if current_unrealized_value > self.highest_unrealized_account_balance {
+            self.highest_unrealized_account_balance = current_unrealized_value;
+        } else if current_unrealized_value < self.lowest_unrealized_account_balance {
+            self.lowest_unrealized_account_balance = current_unrealized_value;
         }
     }
 
@@ -198,6 +216,11 @@ impl Broker {
 
                 self.update_statistics();
 
+                // println!("");
+                // println!("realized: {}", self.account_balance());
+                // println!("unrealized: {}", self.unrealized_account_balance());
+                // println!("");
+
                 let key_count = self.quotes.keys().len();
 
                 if key_count > self.quote_map_capacity {
@@ -291,6 +314,14 @@ impl Broker {
 
     pub fn account_balance(&self) -> Money {
         self.balance
+    }
+
+    pub fn unrealized_account_balance(&self) -> Money {
+        self.balance
+            + self.open_positions()
+                .iter()
+                .map(|p| p.current_value(&self.quote_for(p.name()).unwrap()))
+                .sum()
     }
 
     pub fn quote_for(&self, option_name: Rc<str>) -> Option<Quote> {

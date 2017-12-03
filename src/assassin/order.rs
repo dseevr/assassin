@@ -217,4 +217,14 @@ impl Order {
             self.cost_basis()
         }
     }
+
+    pub fn unrealized_value(&self, quote: &Quote) -> Money {
+        let price = if self.is_buy() {
+            quote.bid()
+        } else {
+            quote.ask()
+        };
+
+        price * self.quantity
+    }
 }

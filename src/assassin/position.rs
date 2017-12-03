@@ -135,7 +135,10 @@ impl Position {
     }
 
     #[allow(dead_code)]
-    pub fn current_value(&self) -> Money {
-        self.orders.iter().map(|o| o.canonical_cost_basis()).sum()
+    pub fn current_value(&self, current_quote: &Quote) -> Money {
+        self.orders
+            .iter()
+            .map(|o| o.unrealized_value(current_quote))
+            .sum()
     }
 }
