@@ -78,11 +78,11 @@ impl Broker {
     }
 
     pub fn highest_unrealized_account_balance(&self) -> Money {
-        self.highest_realized_account_balance
+        self.highest_unrealized_account_balance
     }
 
     pub fn lowest_unrealized_account_balance(&self) -> Money {
-        self.lowest_realized_account_balance
+        self.lowest_unrealized_account_balance
     }
 
     pub fn update_statistics(&mut self) {
