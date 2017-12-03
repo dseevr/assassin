@@ -24,7 +24,7 @@ pub struct Broker {
     // TODO: convert this into a FnvHashMap<Rc<str>, FnvHashMap<Rc<str>, Quote>>
     quotes: FnvHashMap<Rc<str>, Quote>,
     current_date: DateTime<Utc>,
-    ticks_processed: i64,
+    quotes_processed: i32,
     quote_map_capacity: usize,
     underlying_prices: FnvHashMap<Rc<str>, Money>,
 
@@ -59,7 +59,7 @@ impl Broker {
             data_feed: data_feed,
             quotes: FnvHashMap::with_capacity_and_hasher(0, Default::default()),
             current_date: current_date,
-            ticks_processed: 0,
+            quotes_processed: 0,
             quote_map_capacity: 0,
             underlying_prices: FnvHashMap::default(),
             highest_realized_account_balance: initial_balance,
@@ -179,19 +179,16 @@ impl Broker {
     pub fn process_simulation_data(&mut self, model: &mut Model) {
         let mut day_changed;
 
-        // manually consume the first tick here so we don't have to check
-        // to see if it's the first tick every single time
+        // manually consume the first quote here so we don't have to check
+        // to see if it's the first quote every single time
         {
-            let first_tick = self.data_feed.next_tick().unwrap();
-            self.current_date = first_tick.date();
-            self.quotes
-                .insert(first_tick.name(), Quote::new(&first_tick));
-            self.underlying_prices
-                .insert(first_tick.symbol(), first_tick.underlying_price());
+            let first_quote = self.data_feed.next_quote().unwrap();
+            self.current_date = first_quote.date();
+            self.quotes.insert(first_quote.name(), first_quote);
         }
 
-        while let Some(tick) = self.data_feed.next_tick() {
-            day_changed = tick.date() != self.current_date;
+        while let Some(quote) = self.data_feed.next_quote() {
+            day_changed = quote.date() != self.current_date;
 
             // ----- trading day logic -----------------------------------------
 
@@ -204,8 +201,8 @@ impl Broker {
             // ----- after hours cleanup ---------------------------------------
 
             self.underlying_prices
-                .insert(tick.symbol(), tick.underlying_price());
-            self.current_date = tick.date();
+                .insert(quote.symbol(), quote.underlying_price());
+            self.current_date = quote.date();
 
             if day_changed {
                 // force close anything that is expiring and that the model
@@ -235,13 +232,13 @@ impl Broker {
 
             // ----- next day --------------------------------------------------
 
-            // TODO: maybe check that the ticks are in chronological order here?
-            // TODO: record last_tick time on struct
+            // TODO: maybe check that the quotes are in chronological order here?
+            // TODO: record last_quote time on struct
 
             // update quote for this option
-            self.quotes.insert(tick.name(), Quote::new(&tick));
+            self.quotes.insert(quote.name(), quote);
 
-            self.ticks_processed += 1;
+            self.quotes_processed += 1;
         }
 
         self.close_all_positions();
@@ -304,8 +301,8 @@ impl Broker {
         }
     }
 
-    pub fn ticks_processed(&self) -> i64 {
-        self.ticks_processed
+    pub fn quotes_processed(&self) -> i32 {
+        self.quotes_processed
     }
 
     pub fn current_date(&self) -> DateTime<Utc> {

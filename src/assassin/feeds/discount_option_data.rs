@@ -2,7 +2,7 @@ use std::io::BufReader;
 use std::io::BufRead;
 use std::fs::File;
 
-use assassin::tick::Tick;
+use assassin::quote::Quote;
 use assassin::traits::*;
 
 extern crate chrono;
@@ -43,7 +43,7 @@ impl DiscountOptionData {
 // 2013-01-02
 
 impl DataFeed for DiscountOptionData {
-    fn next_tick(&mut self) -> Option<Tick> {
+    fn next_quote(&mut self) -> Option<Quote> {
         self.line.clear();
 
         let res = self.enumerator.read_line(&mut self.line);
@@ -102,7 +102,7 @@ impl DataFeed for DiscountOptionData {
                 .and_hms(0, 0, 0)
         };
 
-        let t = Tick::new(
+        let t = Quote::new(
             symbol,
             expiration_date,
             Money::from_float(ask),

@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use assassin::tick::Tick;
-
 extern crate chrono;
 use self::chrono::prelude::*;
 
@@ -10,30 +8,75 @@ use greenback::Greenback as Money;
 
 #[derive(Clone)]
 pub struct Quote {
-    name: Rc<str>,
     symbol: Rc<str>,
-    bid: Money,
-    ask: Money,
-    strike_price: Money,
     expiration_date: DateTime<Utc>,
+    ask: Money,
+    bid: Money,
+    last_price: Money,
     call: bool,
+    strike_price: Money,
+    volume: i32,
+    implied_volatility: f32,
+    delta: f32,
+    gamma: f32,
+    vega: f32,
+    open_interest: i32,
+    underlying_price: Money,
+    date: DateTime<Utc>,
+    name: Rc<str>,
     // TODO: depth, etc. if available
 }
 
 impl Quote {
-    pub fn new(tick: &Tick) -> Quote {
-        if tick.bid() > tick.ask() {
-            panic!("got bid {} > ask {}", tick.bid(), tick.ask());
-        }
+    pub fn new(
+        symbol: String,
+        expiration_date: DateTime<Utc>,
+        ask: Money,
+        bid: Money,
+        last_price: Money,
+        call: bool,
+        strike_price: Money,
+        volume: i32,
+        implied_volatility: f32,
+        delta: f32,
+        gamma: f32,
+        vega: f32,
+        open_interest: i32,
+        underlying_price: Money,
+        date: DateTime<Utc>,
+    ) -> Quote {
+        let name = format!(
+            "{symbol}{year}{month}{day}{t}{price:>0width$}0",
+            symbol = symbol,
+            year = expiration_date.year(),
+            month = expiration_date.month(),
+            day = expiration_date.day(),
+            t = if call { "C" } else { "P" },
+            // this used to be multiplied by 100 but raw_value() is the same thing
+            price = strike_price.raw_value(),
+            width = 7,
+        );
+
+        let symbol_ref: &str = &symbol;
+        let name_ref: &str = &name;
 
         Quote {
-            name: tick.name(),
-            symbol: tick.symbol(),
-            bid: tick.bid(),
-            ask: tick.ask(),
-            strike_price: tick.strike_price(),
-            expiration_date: tick.expiration_date(),
-            call: tick.is_call(),
+            symbol: Rc::from(symbol_ref),
+            expiration_date: expiration_date,
+            ask: ask,
+            bid: bid,
+            last_price: last_price,
+            call: call,
+            strike_price: strike_price,
+            volume: volume,
+            implied_volatility: implied_volatility,
+            delta: delta,
+            gamma: gamma,
+            vega: vega,
+            open_interest: open_interest,
+            underlying_price: underlying_price,
+            date: date,
+            name: Rc::from(name_ref),
         }
     }
 
@@ -54,10 +97,6 @@ impl Quote {
         self.strike_price
     }
 
-    pub fn name(&self) -> Rc<str> {
-        Rc::clone(&self.name)
-    }
-
     pub fn symbol(&self) -> Rc<str> {
         Rc::clone(&self.symbol)
     }
@@ -76,5 +115,71 @@ impl Quote {
 
     pub fn days_to_expiration(&self, current_date: DateTime<Utc>) -> i32 {
         self.expiration_date.num_days_from_ce() - current_date.num_days_from_ce()
+    }
+
+    pub fn underlying_price(&self) -> Money {
+        self.underlying_price
+    }
+
+    // See: https://en.wikipedia.org/wiki/Option_naming_convention#Proposed_revision
+    // e.g., CSCO171117C00019000
+    pub fn name(&self) -> Rc<str> {
+        Rc::clone(&self.name)
+    }
+
+    #[allow(dead_code)]
+    pub fn days_until_expiration(&self) -> i32 {
+        self.expiration_date.num_days_from_ce() - self.date.num_days_from_ce()
+    }
+
+    #[allow(dead_code)]
+    pub fn intrinsic_value(&self) -> Money {
+        if self.call {
+            if self.underlying_price > self.strike_price {
+                self.underlying_price - self.strike_price
+            } else {
+                Money::zero()
+            }
+        } else {
+            if self.underlying_price < self.strike_price {
+                self.strike_price - self.underlying_price
+            } else {
+                Money::zero()
+            }
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn extrinsic_value(&self) -> Money {
+        self.midpoint_price() - self.intrinsic_value()
+    }
+
+    #[allow(dead_code)]
+    pub fn value_ratio(&self) -> f32 {
+        // TODO: if i_value is 0, this is division by 0 and becomes infinity.
+        //       see if we should return an Option<Money> in light of that...
+
+        let extrinsic = self.extrinsic_value().raw_value() as f32;
+        let intrinsic = self.intrinsic_value().raw_value() as f32;
+
+        (extrinsic / intrinsic) / 100.0
+    }
+
+    #[allow(dead_code)]
+    pub fn print_deets(&self) {
+        println!("=======================");
+        println!("name: {}", self.name());
+        println!("spread: {}", self.ask - self.bid);
+        println!("intrinsic: {}", self.intrinsic_value());
+        println!("extrinsic: {}", self.extrinsic_value());
+        println!("value ratio: {:.2}%", self.value_ratio());
+        println!("last price: {}", self.last_price);
+        println!("underlying price: {}", self.underlying_price);
+        println!("date: {} expiration: {}", self.date, self.expiration_date);
+        println!("days left: {}", self.days_until_expiration());
+    }
+
+    pub fn date(&self) -> DateTime<Utc> {
+        self.date
     }
 }

@@ -1,6 +1,6 @@
 use assassin::broker::Broker;
 use assassin::order::Order;
-use assassin::tick::Tick;
+use assassin::quote::Quote;
 
 extern crate greenback;
 use greenback::Greenback as Money;
@@ -10,7 +10,7 @@ pub trait Commission {
 }
 
 pub trait DataFeed {
-    fn next_tick(&mut self) -> Option<Tick>;
+    fn next_quote(&mut self) -> Option<Quote>;
 }
 
 pub trait Model {
