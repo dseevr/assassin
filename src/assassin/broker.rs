@@ -29,8 +29,8 @@ pub struct Broker {
     underlying_prices: FnvHashMap<Rc<str>, Money>,
 
     // statistics for simulation
-    highest_account_balance: Money,
-    lowest_account_balance: Money,
+    highest_realized_account_balance: Money,
+    lowest_realized_account_balance: Money,
 
     // TODO: add vars for realized and unrealized high/low balances
 }
@@ -60,17 +60,17 @@ impl Broker {
             ticks_processed: 0,
             quote_map_capacity: 0,
             underlying_prices: FnvHashMap::default(),
-            highest_account_balance: initial_balance,
-            lowest_account_balance: initial_balance,
+            highest_realized_account_balance: initial_balance,
+            lowest_realized_account_balance: initial_balance,
         }
     }
 
-    pub fn highest_account_balance(&self) -> Money {
-        self.highest_account_balance
+    pub fn highest_realized_account_balance(&self) -> Money {
+        self.highest_realized_account_balance
     }
 
-    pub fn lowest_account_balance(&self) -> Money {
-        self.lowest_account_balance
+    pub fn lowest_realized_account_balance(&self) -> Money {
+        self.lowest_realized_account_balance
     }
 
     pub fn update_statistics(&mut self) {
@@ -78,10 +78,10 @@ impl Broker {
         // let current_value: Money = self.positions().iter().map(|p| p.current_value()).sum();
         let current_value = self.balance;
 
-        if current_value > self.highest_account_balance {
-            self.highest_account_balance = current_value;
-        } else if current_value < self.lowest_account_balance {
-            self.lowest_account_balance = current_value;
+        if current_value > self.highest_realized_account_balance {
+            self.highest_realized_account_balance = current_value;
+        } else if current_value < self.lowest_realized_account_balance {
+            self.lowest_realized_account_balance = current_value;
         }
     }
 
@@ -136,6 +136,7 @@ impl Broker {
     //         .collect()
     // }
 
+    #[allow(dead_code)]
     pub fn call_quotes_for(&self, symbol: &str) -> Vec<&Quote> {
         let mut quotes: Vec<&Quote> = self.quotes_for(symbol)
             .into_iter()

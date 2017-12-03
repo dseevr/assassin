@@ -75,6 +75,7 @@ impl Order {
     }
 
     // "AAPL: BUY 10 CALL $150 STRIKE at LIMIT $2.50"
+    #[allow(dead_code)]
     pub fn summary(&self) -> String {
         format!(
             "{} {} {} {} STRIKE at LIMIT {}",
@@ -169,6 +170,15 @@ impl Order {
         !self.buy && !self.open
     }
 
+    pub fn is_open(&self) -> bool {
+        self.open
+    }
+
+    #[allow(dead_code)]
+    pub fn is_close(&self) -> bool {
+        !self.is_open()
+    }
+
     pub fn margin_requirement(&self, price: Money) -> Money {
         price * 100 * self.quantity
     }
@@ -178,6 +188,7 @@ impl Order {
         self.fill_price.unwrap() * 100 * self.quantity
     }
 
+    #[allow(dead_code)]
     pub fn symbol(&self) -> &str {
         &self.symbol
     }

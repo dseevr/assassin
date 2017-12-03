@@ -12,6 +12,7 @@ use greenback::Greenback as Money;
 
 static TICKER: &'static str = "AAPL";
 
+#[allow(dead_code)]
 pub fn print_quote(q: &Quote, date: DateTime<Utc>) {
     let call = q.is_call();
     let strike = q.strike_price();
@@ -23,6 +24,7 @@ pub fn print_quote(q: &Quote, date: DateTime<Utc>) {
     println!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
 }
 
+#[allow(dead_code)]
 pub fn print_chain(quotes: Vec<&Quote>, date: DateTime<Utc>) {
     for q in quotes {
         print_quote(q, date);
@@ -111,14 +113,11 @@ impl PMCC {
     // --------------------------------------------------------------------------------------------
 
     fn look_for_new_short_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
-        let date = broker.current_date();
         let underlying_price = broker.underlying_price_for(TICKER);
 
-        // find upper call quote to sell
-
         // println!(
-        //     "** Searching for candidate quote for upper call ({} strikes above)",
-        //     STRIKES_ABOVE
+        //     "** Searching for candidate quote for upper call ({} strikes below)",
+        //     STRIKES_BELOW
         // );
 
         let quotes: Vec<&Quote> = broker
@@ -147,14 +146,11 @@ impl PMCC {
     }
 
     fn look_for_new_long_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
-        let date = broker.current_date();
         let underlying_price = broker.underlying_price_for(TICKER);
 
-        // find upper call quote to sell
-
         // println!(
-        //     "** Searching for candidate quote for upper call ({} strikes above)",
-        //     STRIKES_ABOVE
+        //     "** Searching for candidate quote for lower call ({} strikes below)",
+        //     STRIKES_BELOW
         // );
 
         let quotes: Vec<&Quote> = broker
@@ -164,13 +160,6 @@ impl PMCC {
             .collect();
 
         // print_chain(quotes.clone(), date);
-
-        // find lower call quote to buy
-
-        // println!(
-        //     "** Searching for candidate quote for lower call ({} strikes below)",
-        //     STRIKES_BELOW
-        // );
 
         let quote = match n_strikes_below(quotes, STRIKES_BELOW, underlying_price) {
             Some(quote) => {
@@ -189,7 +178,8 @@ impl PMCC {
         Some(o)
     }
 
-    fn manage_positions(&self, broker: &mut Broker, positions: Vec<Position>) -> Vec<Order> {
+
+    fn manage_positions(&self, _broker: &mut Broker, _positions: Vec<Position>) -> Vec<Order> {
         vec![]
     }
 }

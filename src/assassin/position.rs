@@ -99,8 +99,24 @@ impl Position {
         !self.is_long()
     }
 
+    #[allow(dead_code)]
+    pub fn is_flat(&self) -> bool {
+        self.quantity == 0
+    }
+
     pub fn is_open(&self) -> bool {
-        self.quantity != 0 // can be negative if short
+        let mut open = 0;
+        let mut closed = 0;
+
+        for o in self.orders.iter() {
+            if o.is_open() {
+                open += 1;
+            } else {
+                closed += 1;
+            }
+        }
+
+        open != closed
     }
 
     #[allow(dead_code)]
@@ -118,6 +134,7 @@ impl Position {
         self.expiration_date.num_days_from_ce() < current_date.num_days_from_ce()
     }
 
+    #[allow(dead_code)]
     pub fn current_value(&self) -> Money {
         self.orders.iter().map(|o| o.canonical_cost_basis()).sum()
     }

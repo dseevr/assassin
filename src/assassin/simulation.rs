@@ -131,12 +131,12 @@ impl Simulation {
         );
         println!("Average commission per order: {}", average_commission);
         println!(
-            "Highest account balance: {}",
-            self.broker.highest_account_balance()
+            "Highest realized account balance: {}",
+            self.broker.highest_realized_account_balance()
         );
         println!(
-            "Lowest account balance: {}",
-            self.broker.lowest_account_balance()
+            "Lowest realized account balance: {}",
+            self.broker.lowest_realized_account_balance()
         );
         println!("");
 
