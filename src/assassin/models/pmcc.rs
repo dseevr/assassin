@@ -112,7 +112,7 @@ impl PMCC {
 
     // --------------------------------------------------------------------------------------------
 
-    fn look_for_new_short_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
+    fn look_for_new_short_position_to_open(&self, broker: &Broker) -> Option<Order> {
         let underlying_price = broker.underlying_price_for(TICKER);
 
         // println!(
@@ -145,7 +145,7 @@ impl PMCC {
         Some(o)
     }
 
-    fn look_for_new_long_position_to_open(&self, broker: &mut Broker) -> Option<Order> {
+    fn look_for_new_long_position_to_open(&self, broker: &Broker) -> Option<Order> {
         let underlying_price = broker.underlying_price_for(TICKER);
 
         // println!(
@@ -179,7 +179,7 @@ impl PMCC {
     }
 
 
-    fn manage_positions(&self, _broker: &mut Broker, _positions: Vec<Position>) -> Vec<Order> {
+    fn manage_positions(&self, _broker: &Broker, _positions: Vec<&Position>) -> Vec<Order> {
         vec![]
     }
 }
@@ -189,9 +189,9 @@ impl Model for PMCC {
         "Poor Man's Covered Call"
     }
 
-    fn before_simulation(&mut self, _broker: &mut Broker) {}
+    fn before_simulation(&mut self, _broker: &Broker) {}
 
-    fn run_logic(&mut self, broker: &mut Broker) {
+    fn run_logic(&mut self, broker: &Broker) -> Vec<Order> {
         let positions = broker.open_positions();
 
         let mut orders = vec![];
@@ -200,10 +200,6 @@ impl Model for PMCC {
             2 => {
                 // println!("** Managing existing positions");
                 orders = self.manage_positions(broker, positions);
-
-                for o in orders {
-                    broker.process_order(o);
-                }
             }
             1 => {
                 if positions[0].is_long() {
@@ -215,10 +211,6 @@ impl Model for PMCC {
                     if let Some(o) = self.look_for_new_long_position_to_open(broker) {
                         orders.push(o);
                     }
-                }
-
-                for o in orders {
-                    broker.process_order(o);
                 }
             }
             0 => {
@@ -232,17 +224,18 @@ impl Model for PMCC {
                 }
 
                 // only process orders if we found candidates for both
-                if orders.len() == 2 {
-                    for o in orders {
-                        broker.process_order(o);
-                    }
+                if orders.len() != 2 {
+                    println!("didn't find a candidate for both positions");
+                    orders.clear();
                 }
             }
             _ => panic!("unexpected number of positions: {}", positions.len()),
         };
+
+        orders
     }
 
-    fn after_simulation(&mut self, _broker: &mut Broker) {}
+    fn after_simulation(&mut self, _broker: &Broker) {}
 
     fn show_bod_header(&self, broker: &Broker) {
         println!(

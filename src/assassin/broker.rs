@@ -37,6 +37,7 @@ pub struct Broker {
     final_unrealized_account_balance: Money,
 
     // TODO: add vars for realized and unrealized high/low balances
+    carried_over_quote: Option<Quote>,
 }
 
 impl Broker {
@@ -69,6 +70,7 @@ impl Broker {
             highest_unrealized_account_balance: initial_balance,
             lowest_unrealized_account_balance: initial_balance,
             final_unrealized_account_balance: initial_balance,
+            carried_over_quote: None,
         }
     }
 
@@ -99,7 +101,7 @@ impl Broker {
 
         let current_unrealized_value = self.unrealized_account_balance();
 
-        println!("current unrealized: {}", current_unrealized_value);
+        // println!("current unrealized: {}", current_unrealized_value);
 
         if current_unrealized_value > self.highest_unrealized_account_balance {
             self.highest_unrealized_account_balance = current_unrealized_value;
@@ -181,8 +183,29 @@ impl Broker {
         quotes
     }
 
-    pub fn process_simulation_data(&mut self, model: &mut Model) {
-        let mut day_changed;
+    pub fn process_simulation_data(&mut self) -> bool {
+        println!("===== new day ==========================================");
+
+        self.update_statistics();
+
+        self.quotes =
+            FnvHashMap::with_capacity_and_hasher(self.quote_map_capacity, Default::default());
+
+        // if we aborted the main loop when a quote for the next day came in, apply it now
+        if self.carried_over_quote.is_some() {
+            let quote = self.carried_over_quote.clone().unwrap();
+
+            self.underlying_prices
+                .insert(quote.symbol(), quote.underlying_price());
+            self.current_date = quote.date();
+
+            self.quotes.insert(quote.name(), quote.clone());
+            self.quotes_processed += 1;
+
+            self.carried_over_quote = None;
+
+            println!("inserted carried over data");
+        }
 
         // manually consume the first quote here so we don't have to check
         // to see if it's the first quote every single time
@@ -193,41 +216,26 @@ impl Broker {
         }
 
         while let Some(quote) = self.data_feed.next_quote() {
-            day_changed = quote.date() != self.current_date;
-
-            // ----- trading day logic -----------------------------------------
-
-            // with EOD data, we run every time the day changes
-            if day_changed {
-                model.run_logic(self);
-            }
-
-            // ----- after hours cleanup ---------------------------------------
-
-            self.underlying_prices
-                .insert(quote.symbol(), quote.underlying_price());
-            self.current_date = quote.date();
+            let day_changed = quote.date() != self.current_date;
 
             if day_changed {
+                println!("day changed from {} to {}", quote.date(), self.current_date);
                 // force close anything that is expiring and that the model
                 // didn't already close the last trading day.  do this before
                 // we reset the quotes so that the last trading day's quotes
                 // are used when closing positions.
-                self.close_expired_positions();
+                self.close_expired_positions(quote.date());
 
                 self.update_statistics();
-
-                // prepare for next day
 
                 let key_count = self.quotes.keys().len();
                 if key_count > self.quote_map_capacity {
                     self.quote_map_capacity = key_count;
                 }
 
-                self.quotes = FnvHashMap::with_capacity_and_hasher(
-                    self.quote_map_capacity,
-                    Default::default(),
-                );
+                self.carried_over_quote = Some(quote);
+
+                return true;
             }
 
             // ----- next day --------------------------------------------------
@@ -235,15 +243,19 @@ impl Broker {
             // TODO: maybe check that the quotes are in chronological order here?
             // TODO: record last_quote time on struct
 
-            // update quote for this option
-            self.quotes.insert(quote.name(), quote);
+            self.underlying_prices
+                .insert(quote.symbol(), quote.underlying_price());
+            self.current_date = quote.date();
 
+            self.quotes.insert(quote.name(), quote);
             self.quotes_processed += 1;
         }
 
         self.final_unrealized_account_balance = self.unrealized_account_balance();
 
         self.close_all_open_positions();
+
+        false
     }
 
     fn fill_order(&mut self, order: Order, quote: &Quote) {
@@ -271,21 +283,18 @@ impl Broker {
         let total = filled_order.cost_basis() + filled_order.commission();
         let original_balance = self.unrealized_account_balance();
 
-        // TODO: validate that the account has enough money here
+        // ===== validate that the account has enough money =============================
 
-        // if order.is_buy() {
-        //     // TODO: factor in commission here... probably not super important though
-        //     if required_margin > self.balance {
-        //         println!(
-        //             "not enough money (need {}, have {})",
-        //             required_margin,
-        //             self.balance,
-        //         );
-        //         return false;
-        //     }
-        // }
+        // NOTE: don't reuse this below because we use canonical_cost_basis() when altering balances
+        let required_margin = filled_order.cost_basis() + filled_order.commission();
 
-        // TODO: stick the FilledOrder onto the Position
+        if filled_order.is_buy() && required_margin > self.balance {
+            println!(
+                "not enough money (need {}, have {})",
+                required_margin,
+                self.balance,
+            );
+        }
 
         // TODO: update values for balances and stuff
 
@@ -297,15 +306,13 @@ impl Broker {
 
         let filled_order_rc = Rc::from(filled_order);
 
+        // stick the FilledOrder onto the Position
         self.positions
             .entry(key)
             .or_insert(Position::new(&quote))
             .apply_order(filled_order_rc);
 
-        // TODO: put this stuff in an apply_order() function or something
         self.balance += cost_basis;
-
-        // apply commission to balance and running total of paid commission
         self.balance -= commish;
         self.commission_paid += commish;
 
@@ -367,35 +374,26 @@ impl Broker {
     pub fn process_order(&mut self, order: Order) {
         // TODO: assign a unique id to each order
 
-        // TODO: exit cleanly instead of exploding?
         let quote = self.quote_for(order.option_name()).unwrap();
-
-        // println!("Order received: {}", order.summary());
 
         self.fill_order(order, &quote);
     }
 
-    // TODO: maybe don't sort this all the time?
-    //       open_positions() consumes this after it's sorted, etc.
-    pub fn positions(&self) -> Vec<Position> {
-        let mut ps: Vec<Position> = self.positions.clone().into_iter().map(|(_, p)| p).collect();
+    pub fn open_positions(&self) -> Vec<&Position> {
+        let mut ps: Vec<&Position> = self.positions
+            .iter()
+            .map(|(_, p)| p)
+            .filter(|p| p.is_open())
+            .collect();
         ps.sort_by(|a, b| a.name().cmp(&b.name()));
         ps
     }
 
-    pub fn open_positions(&self) -> Vec<Position> {
-        self.positions()
-            .into_iter()
-            .filter(|p| p.is_open())
-            .collect()
+    pub fn positions(&self) -> Vec<&Position> {
+        let mut ps: Vec<&Position> = self.positions.iter().map(|(_, p)| p).collect();
+        ps.sort_by(|a, b| a.name().cmp(&b.name()));
+        ps
     }
-
-    // TODO: switch back to reference version once pmcc.rs isn't borrowing mutably and immutably
-    // pub fn positions(&self) -> Vec<&Position> {
-    //     let mut ps: Vec<&Position> = self.positions.iter().map(|(_, p)| p).collect();
-    //     ps.sort_by(|a, b| a.name().cmp(&b.name()));
-    //     ps
-    // }
 
     pub fn total_order_count(&self) -> i32 {
         self.orders.len() as i32
@@ -408,10 +406,27 @@ impl Broker {
     // TODO: address mega duplication between close_expired_positions() and
     //       close_all_option_positions() without triggering mutable self crap
 
-    fn close_expired_positions(&mut self) {
+    fn close_expired_positions(&mut self, date: DateTime<Utc>) {
+        let mut orders = vec![];
+
+        // {
+        //     println!("current_date: {}", self.current_date);
+        //     for p in self.positions() {
+        //         println!("position name: {}", p.name());
+        //     }
+
+        //     let quotes = self.quotes.iter().map(|(_, q)| q).collect::<Vec<&Quote>>();
+
+        //     for q in quotes {
+        //         println!("quote name: {}", q.name());
+        //     }
+        // }
+
         for position in self.open_positions() {
-            if position.is_expired(self.current_date) {
+            if position.is_expired(date) {
+                println!("before unwrap");
                 let quote = self.quote_for(position.name()).unwrap();
+                println!("after unwrap");
                 let quantity = position.quantity().abs();
 
                 // close at the worst possible price
@@ -421,12 +436,18 @@ impl Broker {
                     Order::new_buy_close_order(&quote, quantity, quote.ask())
                 };
 
-                self.fill_order(order, &quote);
+                orders.push((order, quote));
             }
+        }
+
+        for (o, q) in orders {
+            self.fill_order(o, &q);
         }
     }
 
     fn close_all_open_positions(&mut self) {
+        let mut orders = vec![];
+
         for position in self.open_positions() {
             let quote = self.quote_for(position.name()).unwrap();
             let quantity = position.quantity().abs();
@@ -438,7 +459,11 @@ impl Broker {
                 Order::new_buy_close_order(&quote, quantity, quote.ask())
             };
 
-            self.fill_order(order, &quote);
+            orders.push((order, quote));
+        }
+
+        for (o, q) in orders {
+            self.fill_order(o, &q);
         }
     }
 }

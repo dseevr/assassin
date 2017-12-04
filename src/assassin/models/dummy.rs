@@ -1,4 +1,5 @@
 use assassin::broker::Broker;
+use assassin::order::Order;
 use assassin::traits::*;
 
 #[allow(dead_code)]
@@ -16,9 +17,11 @@ impl Model for DummyModel {
         "dummy model"
     }
 
-    fn before_simulation(&mut self, _b: &mut Broker) {}
-    fn after_simulation(&mut self, _b: &mut Broker) {}
-    fn run_logic(&mut self, _b: &mut Broker) {}
+    fn before_simulation(&mut self, _b: &Broker) {}
+    fn after_simulation(&mut self, _b: &Broker) {}
+    fn run_logic(&mut self, _b: &Broker) -> Vec<Order> {
+        vec![]
+    }
     fn show_bod_header(&self, _b: &Broker) {}
     fn show_eod_summary(&self, _b: &Broker) {}
 }
