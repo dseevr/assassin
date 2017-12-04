@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use assassin::order::Order;
+use assassin::filled_order::FilledOrder;
 use assassin::quote::Quote;
 
 extern crate chrono;
@@ -15,7 +15,7 @@ pub struct Position {
     symbol: Rc<str>,
     quantity: i32,
     expiration_date: DateTime<Utc>,
-    orders: Vec<Rc<Order>>,
+    orders: Vec<Rc<FilledOrder>>, // TODO: rename to filled_orders
 }
 
 impl Position {
@@ -37,7 +37,7 @@ impl Position {
         self.orders
             .iter()
             .filter(|o| o.closed_by_broker())
-            .collect::<Vec<&Rc<Order>>>()
+            .collect::<Vec<&Rc<FilledOrder>>>()
             .len() as i32
     }
 
@@ -69,7 +69,7 @@ impl Position {
         Rc::clone(&self.name)
     }
 
-    pub fn orders(&self) -> &Vec<Rc<Order>> {
+    pub fn orders(&self) -> &Vec<Rc<FilledOrder>> {
         &self.orders
     }
 
@@ -77,7 +77,7 @@ impl Position {
         self.orders.len() as i32
     }
 
-    pub fn apply_order(&mut self, order: Rc<Order>) {
+    pub fn apply_order(&mut self, order: Rc<FilledOrder>) {
         self.quantity += order.canonical_quantity();
         self.orders.push(order);
     }
@@ -155,4 +155,17 @@ impl Position {
             })
             .sum()
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_current_value() {
+        let foo = dummy_quote();
+        assert!(true == true);
+    }
+
 }

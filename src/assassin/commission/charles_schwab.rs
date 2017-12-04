@@ -1,4 +1,4 @@
-use assassin::order::Order;
+use assassin::filled_order::FilledOrder;
 use assassin::traits::*;
 
 extern crate greenback;
@@ -20,11 +20,11 @@ impl CharlesSchwab {
 
 // https://www.schwab.com/public/schwab/active_trader/pricing
 impl Commission for CharlesSchwab {
-    fn commission_for(&self, order: &Order) -> Money {
-        if order.buy_to_close() && order.fill_price() <= Money::new(0, 5) {
+    fn commission_for(&self, filled_order: &FilledOrder) -> Money {
+        if filled_order.buy_to_close() && filled_order.fill_price() <= Money::new(0, 5) {
             Money::zero() // no commission on buy-to-close for <= $0.05
         } else {
-            self.base_fee + self.per_contract * order.quantity()
+            self.base_fee + self.per_contract * filled_order.quantity()
         }
     }
 }

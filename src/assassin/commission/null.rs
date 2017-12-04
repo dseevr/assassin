@@ -1,5 +1,5 @@
 use assassin::money::Money;
-use assassin::order::Order;
+use assassin::filled_order::FilledOrder;
 use assassin::traits::*;
 
 pub struct NullCommission {}
@@ -11,7 +11,7 @@ impl NullCommission {
 }
 
 impl Commission for NullCommission {
-    fn commission_for(&self, _order: &Order) -> Money {
+    fn commission_for(&self, _filled_order: &FilledOrder) -> Money {
         Money::zero()
     }
 }

@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use assassin::filled_order::FilledOrder;
 use assassin::order::Order;
 use assassin::position::Position;
 use assassin::quote::Quote;
@@ -17,7 +18,7 @@ use greenback::Greenback as Money;
 pub struct Broker {
     balance: Money,
     positions: FnvHashMap<Rc<str>, Position>,
-    orders: Vec<Order>,
+    orders: Vec<FilledOrder>, // TODO: rename to filled_orders and store received Orders separately
     commission_schedule: Box<Commission>,
     commission_paid: Money,
     data_feed: Box<DataFeed>,
@@ -198,7 +199,6 @@ impl Broker {
 
             // with EOD data, we run every time the day changes
             if day_changed {
-                // TODO: convert this to a channel send with a timeout
                 model.run_logic(self);
             }
 
@@ -217,13 +217,9 @@ impl Broker {
 
                 self.update_statistics();
 
-                // println!("");
-                // println!("realized: {}", self.account_balance());
-                // println!("unrealized: {}", self.unrealized_account_balance());
-                // println!("");
+                // prepare for next day
 
                 let key_count = self.quotes.keys().len();
-
                 if key_count > self.quote_map_capacity {
                     self.quote_map_capacity = key_count;
                 }
@@ -247,64 +243,98 @@ impl Broker {
 
         self.final_unrealized_account_balance = self.unrealized_account_balance();
 
-        self.close_all_positions();
+        self.close_all_open_positions();
     }
 
-    fn close_expired_positions(&mut self) {
-        if self.positions.is_empty() {
-            return;
-        }
+    fn fill_order(&mut self, order: Order, quote: &Quote) {
+        let action = if order.is_buy() { "buy" } else { "sell" };
+        let sign = if order.is_buy() { ">>" } else { "<<" };
+        let call = if quote.is_call() { "CALL" } else { "PUT" };
 
-        let mut orders = vec![];
+        // TODO: ensure that days remaining is > 0
+        //       since we only buy at end of day, if there are no days left
+        //       the the contract is _already_ expired.
 
-        for (option_name, position) in &self.positions {
-            if position.is_open() && position.is_expired(self.current_date) {
-                println!("closing position {} due to expiration:", option_name);
+        // TODO: call OrderFiller's logic here and use the limit on the Order
+        // let fill_price = whatever;
+        // let required_margin = filled_order.margin_requirement(fill_price);
 
-                let quote = self.quote_for(position.name()).unwrap();
-                let quantity = position.quantity().abs();
-                let action;
-                let price;
+        let fill_price = quote.midpoint_price();
 
-                // TODO: call OrderFiller's logic here
+        let mut filled_order = FilledOrder::new(order, &quote, fill_price, self.current_date);
 
-                let order = if position.is_long() {
-                    action = "sell";
-                    price = quote.bid();
+        let commish = self.commission_schedule.commission_for(&filled_order);
 
-                    Order::new_sell_close_order(&quote, quantity, price)
-                } else {
-                    action = "buy";
-                    price = quote.ask();
+        filled_order.set_commission(commish);
+        filled_order.set_closed_by_broker();
 
-                    Order::new_buy_close_order(&quote, quantity, price)
-                };
+        let total = filled_order.cost_basis() + filled_order.commission();
+        let original_balance = self.unrealized_account_balance();
 
-                let mut filled_order = order;
-                filled_order.filled_at(quote.midpoint_price(), &quote, self.current_date);
-                let commish = self.commission_schedule.commission_for(&filled_order);
-                filled_order.set_commission(commish);
-                filled_order.set_closed_by_broker();
+        // TODO: validate that the account has enough money here
 
-                let total = filled_order.margin_requirement(price) + commish;
+        // if order.is_buy() {
+        //     // TODO: factor in commission here... probably not super important though
+        //     if required_margin > self.balance {
+        //         println!(
+        //             "not enough money (need {}, have {})",
+        //             required_margin,
+        //             self.balance,
+        //         );
+        //         return false;
+        //     }
+        // }
 
-                println!(
-                    "  {}ing contracts @ {} + {} commission ({} total)",
-                    action,
-                    filled_order.fill_price(),
-                    commish,
-                    total,
-                );
+        // TODO: stick the FilledOrder onto the Position
 
-                orders.push(filled_order);
-            }
-        }
+        // TODO: update values for balances and stuff
 
-        for order in orders {
-            if !self.process_order(order) {
-                panic!("failed to process_order... margin call?");
-            }
-        }
+        let cost_basis = filled_order.canonical_cost_basis();
+        let key = filled_order.option_name();
+        let quantity = filled_order.quantity();
+        let commish = filled_order.commission();
+        let fill_price = filled_order.fill_price();
+
+        let filled_order_rc = Rc::from(filled_order);
+
+        self.positions
+            .entry(key)
+            .or_insert(Position::new(&quote))
+            .apply_order(filled_order_rc);
+
+        // TODO: put this stuff in an apply_order() function or something
+        self.balance += cost_basis;
+
+        // apply commission to balance and running total of paid commission
+        self.balance -= commish;
+        self.commission_paid += commish;
+
+        // ===== print details ==========================================================
+
+        println!(
+            "  {}ing contracts @ {} + {} commission ({} total)",
+            action,
+            fill_price,
+            commish,
+            total,
+        );
+
+        println!("{} {} ORDER FILLED.", sign, call);
+        println!(
+            "Strike: {} - Commission: {} - Old (un)balance: {} - New (un)balance: {}",
+            quote.strike_price(),
+            commish,
+            original_balance,
+            self.unrealized_account_balance(),
+        );
+        println!(
+            "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days - {} contracts",
+            self.underlying_price_for("AAPL"),
+            quote.bid(),
+            quote.ask(),
+            quote.days_to_expiration(self.current_date),
+            quantity,
+        );
     }
 
     pub fn quotes_processed(&self) -> i32 {
@@ -334,9 +364,7 @@ impl Broker {
         }
     }
 
-    // TODO: positions have a correct cost basis
-
-    pub fn process_order(&mut self, order: Order) -> bool {
+    pub fn process_order(&mut self, order: Order) {
         // TODO: assign a unique id to each order
 
         // TODO: exit cleanly instead of exploding?
@@ -344,79 +372,7 @@ impl Broker {
 
         // println!("Order received: {}", order.summary());
 
-        // TODO: ensure that days remaining is > 0
-        //       since we only buy at end of day, if there are no days left
-        //       the the contract is _already_ expired.
-
-        // TODO: validate that the option_name in the order actually exists
-
-        // TODO: actually look at the required limit on the order
-        let fill_price = quote.midpoint_price();
-        let required_margin = order.margin_requirement(fill_price);
-
-        if order.is_buy() {
-            // TODO: factor in commission here... probably not super important though
-            if required_margin > self.balance {
-                println!(
-                    "not enough money (need {}, have {})",
-                    required_margin,
-                    self.balance,
-                );
-                return false;
-            }
-        }
-
-        // ----- fill the order ------------------------------------------------------
-
-        let sign = if order.is_buy() { ">>" } else { "<<" };
-        let call = if quote.is_call() { "CALL" } else { "PUT" };
-
-        let mut filled_order = order;
-
-        // fill the order and record it
-        filled_order.filled_at(fill_price, &quote, self.current_date);
-
-        let commish = self.commission_schedule.commission_for(&filled_order);
-        filled_order.set_commission(commish);
-
-        let cost_basis = filled_order.canonical_cost_basis();
-        let key = filled_order.option_name();
-        let quantity = filled_order.quantity();
-
-        let filled_order_rc = Rc::from(filled_order);
-
-        self.positions
-            .entry(key)
-            .or_insert(Position::new(&quote))
-            .apply_order(filled_order_rc);
-
-        let original_balance = self.balance;
-
-        // TODO: put this stuff in an apply_order() function or something
-        self.balance += cost_basis;
-
-        // apply commission to balance and running total of paid commission
-        self.balance -= commish;
-        self.commission_paid += commish;
-
-        println!("{} {} ORDER FILLED.", sign, call);
-        println!(
-            "Strike: {} - Commission: {} - Old balance: {} - New balance: {}",
-            quote.strike_price(),
-            commish,
-            original_balance,
-            self.balance,
-        );
-        println!(
-            "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days - {} contracts",
-            self.underlying_price_for("AAPL"),
-            quote.bid(),
-            quote.ask(),
-            quote.days_to_expiration(self.current_date),
-            quantity,
-        );
-
-        true
+        self.fill_order(order, &quote);
     }
 
     // TODO: maybe don't sort this all the time?
@@ -441,13 +397,6 @@ impl Broker {
     //     ps
     // }
 
-    // pub fn open_positions(&self) -> Vec<&Position> {
-    //     self.positions()
-    //         .into_iter()
-    //         .filter(|p| p.is_open())
-    //         .collect()
-    // }
-
     pub fn total_order_count(&self) -> i32 {
         self.orders.len() as i32
     }
@@ -456,62 +405,40 @@ impl Broker {
         self.commission_paid
     }
 
-    pub fn close_all_positions(&mut self) {
-        let mut orders = vec![];
+    // TODO: address mega duplication between close_expired_positions() and
+    //       close_all_option_positions() without triggering mutable self crap
 
-        for (option_name, position) in &self.positions {
-            if position.is_closed() {
-                continue;
+    fn close_expired_positions(&mut self) {
+        for position in self.open_positions() {
+            if position.is_expired(self.current_date) {
+                let quote = self.quote_for(position.name()).unwrap();
+                let quantity = position.quantity().abs();
+
+                // close at the worst possible price
+                let order = if position.is_long() {
+                    Order::new_sell_close_order(&quote, quantity, quote.bid())
+                } else {
+                    Order::new_buy_close_order(&quote, quantity, quote.ask())
+                };
+
+                self.fill_order(order, &quote);
             }
+        }
+    }
 
-            println!("closing position {} due to end of data feed:", option_name);
-
+    fn close_all_open_positions(&mut self) {
+        for position in self.open_positions() {
             let quote = self.quote_for(position.name()).unwrap();
             let quantity = position.quantity().abs();
-            let action;
-            let price;
 
-            // TODO: call OrderFiller's logic here
-
+            // close at the worst possible price
             let order = if position.is_long() {
-                action = "sell";
-                price = quote.bid();
-
-                Order::new_sell_close_order(&quote, quantity, price)
+                Order::new_sell_close_order(&quote, quantity, quote.bid())
             } else {
-                action = "buy";
-                price = quote.ask();
-
-                Order::new_buy_close_order(&quote, quantity, price)
+                Order::new_buy_close_order(&quote, quantity, quote.ask())
             };
 
-            let mut filled_order = order;
-            filled_order.filled_at(quote.midpoint_price(), &quote, self.current_date);
-            let commish = self.commission_schedule.commission_for(&filled_order);
-            filled_order.set_commission(commish);
-            filled_order.set_closed_by_broker();
-
-            let total = filled_order.margin_requirement(price) + commish;
-
-            println!(
-                "  {}ing contracts @ {} + {} commission ({} total)",
-                action,
-                filled_order.fill_price(),
-                commish,
-                total,
-            );
-
-            orders.push(filled_order);
+            self.fill_order(order, &quote);
         }
-
-        let count = orders.len();
-
-        for order in orders {
-            if !self.process_order(order) {
-                panic!("failed to process_order... margin call?");
-            }
-        }
-
-        println!("Closed {} positions", count);
     }
 }

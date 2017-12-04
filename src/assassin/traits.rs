@@ -1,12 +1,12 @@
 use assassin::broker::Broker;
-use assassin::order::Order;
+use assassin::filled_order::FilledOrder;
 use assassin::quote::Quote;
 
 extern crate greenback;
 use greenback::Greenback as Money;
 
 pub trait Commission {
-    fn commission_for(&self, &Order) -> Money;
+    fn commission_for(&self, &FilledOrder) -> Money;
 }
 
 pub trait DataFeed {

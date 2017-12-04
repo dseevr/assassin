@@ -33,6 +33,8 @@ impl Simulation {
         self.model.before_simulation(&mut *self.broker);
 
         // TODO: broker and model should communicate via a channel
+        // TODO: replace this with a loop where the broker consumes data and returns
+        //       to us so we can invoke the model.  broker shouldn't invoke model.
         self.broker.process_simulation_data(&mut *self.model);
 
         self.model.after_simulation(&mut *self.broker);
