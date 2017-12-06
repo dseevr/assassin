@@ -207,7 +207,7 @@ mod tests {
         let unrealized = o.unrealized_value(&q1);
         let profit = o.unrealized_value(&q2) - o.cost_basis();
 
-        println!(
+        debug!(
             "cost_basis: {} unrealized: {} profit: {}",
             cost_basis,
             unrealized,
@@ -217,12 +217,12 @@ mod tests {
         let d = m2 - m1;
         let difference = d * 100 * 10; // 10 contracts (from dummy_quote())
 
-        println!("d: {} difference: {}", d, difference);
+        debug!("d: {} difference: {}", d, difference);
 
-        println!("{} == {} ?", cost_basis - difference, unrealized);
+        debug!("{} == {} ?", cost_basis - difference, unrealized);
         assert!(cost_basis - difference == unrealized); // selling immediately is a $0.01/share loss
 
-        println!("profit: {} == {} ?", profit, difference);
+        debug!("profit: {} == {} ?", profit, difference);
         assert!(profit == difference); // selling at q2 is a $0.01/share profit
     }
 }

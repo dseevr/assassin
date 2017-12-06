@@ -44,27 +44,27 @@ impl Simulation {
     }
 
     pub fn print_stats(&self) {
-        println!("");
-        println!("===============================================================");
-        println!("");
+        info!("");
+        info!("===============================================================");
+        info!("");
 
         let balance = self.broker.account_balance();
 
-        println!("===== POSITIONS =====");
-        println!("");
+        info!("===== POSITIONS =====");
+        info!("");
 
         let mut running_total = self.starting_balance;
 
         let positions = self.broker.positions();
 
         for pos in &positions {
-            println!("----- {} -----", pos.name());
+            info!("----- {} -----", pos.name());
 
             for o in pos.orders() {
                 running_total = running_total + o.canonical_cost_basis();
 
                 // BUY 10 contracts @ $15
-                println!(
+                info!(
                     "  {} {} {} contracts @ {}",
                     o.buy_or_sell_string(),
                     o.quantity(),
@@ -72,21 +72,21 @@ impl Simulation {
                     o.fill_price(),
                 );
             }
-            println!("");
+            info!("");
 
-            println!("Commission paid: {}", pos.commission_paid());
-            println!("Position value: {}", pos.realized_profit());
-            println!("Running total: {}", running_total);
-            println!("");
+            info!("Commission paid: {}", pos.commission_paid());
+            info!("Position value: {}", pos.realized_profit());
+            info!("Running total: {}", running_total);
+            info!("");
         }
 
         let balance_change = balance - self.starting_balance;
 
-        println!("===== RESULTS =====");
-        println!("");
-        println!("Starting balance: {}", self.starting_balance);
-        println!("Ending balance: {}", balance);
-        println!("Change: {}", balance_change);
+        info!("===== RESULTS =====");
+        info!("");
+        info!("Starting balance: {}", self.starting_balance);
+        info!("Ending balance: {}", balance);
+        info!("Change: {}", balance_change);
 
         let capital_growth = ((balance.raw_value() as f32
             / self.starting_balance.raw_value() as f32) * 100.0)
@@ -118,46 +118,46 @@ impl Simulation {
             }
         };
 
-        println!("Capital growth: {:.2}%", capital_growth);
-        println!("Total orders: {}", total_order_count);
-        println!(
+        info!("Capital growth: {:.2}%", capital_growth);
+        info!("Total orders: {}", total_order_count);
+        info!(
             "Orders closed by broker: {} ({:.2}%)",
             broker_closed_order_count,
             broker_closed_percent,
         );
-        println!(
+        info!(
             "Commission paid: {} ({:.2}% of profit)",
             total_commish,
             commish_percent_of_profit,
         );
-        println!("Average commission per order: {}", average_commission);
-        println!(
+        info!("Average commission per order: {}", average_commission);
+        info!(
             "Highest realized account balance: {}",
             self.broker.highest_realized_account_balance()
         );
-        println!(
+        info!(
             "Lowest realized account balance: {}",
             self.broker.lowest_realized_account_balance()
         );
-        println!(
+        info!(
             "Highest unrealized account balance: {}",
             self.broker.highest_unrealized_account_balance()
         );
-        println!(
+        info!(
             "Lowest unrealized account balance: {}",
             self.broker.lowest_unrealized_account_balance()
         );
-        println!("");
+        info!("");
 
         let quotes_per_sec = self.broker.quotes_processed() as f32 / self.total_run_time();
 
-        println!(
+        info!(
             "Ran simulation ({} ticks) in {:.2} seconds ({}/sec)",
             add_commas(self.broker.quotes_processed()),
             self.total_run_time(),
             add_commas(quotes_per_sec as i64),
         );
-        println!("");
+        info!("");
     }
 
     pub fn total_run_time(&self) -> f32 {

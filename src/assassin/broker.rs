@@ -101,7 +101,7 @@ impl Broker {
 
         let current_unrealized_value = self.unrealized_account_balance();
 
-        // println!("current unrealized: {}", current_unrealized_value);
+        // debug!("current unrealized: {}", current_unrealized_value);
 
         if current_unrealized_value > self.highest_unrealized_account_balance {
             self.highest_unrealized_account_balance = current_unrealized_value;
@@ -184,7 +184,7 @@ impl Broker {
     }
 
     pub fn process_simulation_data(&mut self) -> bool {
-        println!("===== new day ==========================================");
+        info!("===== new day ==========================================");
 
         self.update_statistics();
 
@@ -204,7 +204,7 @@ impl Broker {
 
             self.carried_over_quote = None;
 
-            println!("inserted carried over data");
+            debug!("inserted carried over data");
         }
 
         // manually consume the first quote here so we don't have to check
@@ -219,7 +219,7 @@ impl Broker {
             let day_changed = quote.date() != self.current_date;
 
             if day_changed {
-                println!("day changed from {} to {}", quote.date(), self.current_date);
+                debug!("day changed from {} to {}", quote.date(), self.current_date);
                 // force close anything that is expiring and that the model
                 // didn't already close the last trading day.  do this before
                 // we reset the quotes so that the last trading day's quotes
@@ -289,7 +289,7 @@ impl Broker {
         let required_margin = filled_order.cost_basis() + filled_order.commission();
 
         if filled_order.is_buy() && required_margin > self.balance {
-            println!(
+            info!(
                 "not enough money (need {}, have {})",
                 required_margin,
                 self.balance,
@@ -318,7 +318,7 @@ impl Broker {
 
         // ===== print details ==========================================================
 
-        println!(
+        debug!(
             "  {}ing contracts @ {} + {} commission ({} total)",
             action,
             fill_price,
@@ -326,15 +326,15 @@ impl Broker {
             total,
         );
 
-        println!("{} {} ORDER FILLED.", sign, call);
-        println!(
+        info!("{} {} ORDER FILLED.", sign, call);
+        info!(
             "Strike: {} - Commission: {} - Old (un)balance: {} - New (un)balance: {}",
             quote.strike_price(),
             commish,
             original_balance,
             self.unrealized_account_balance(),
         );
-        println!(
+        info!(
             "   Underlying: {} - Bid: {} - Ask: {} - Expiration: {} days - {} contracts",
             self.underlying_price_for("AAPL"),
             quote.bid(),
@@ -410,23 +410,21 @@ impl Broker {
         let mut orders = vec![];
 
         // {
-        //     println!("current_date: {}", self.current_date);
+        //     debug!("current_date: {}", self.current_date);
         //     for p in self.positions() {
-        //         println!("position name: {}", p.name());
+        //         debug!("position name: {}", p.name());
         //     }
 
         //     let quotes = self.quotes.iter().map(|(_, q)| q).collect::<Vec<&Quote>>();
 
         //     for q in quotes {
-        //         println!("quote name: {}", q.name());
+        //         debug!("quote name: {}", q.name());
         //     }
         // }
 
         for position in self.open_positions() {
             if position.is_expired(date) {
-                println!("before unwrap");
                 let quote = self.quote_for(position.name()).unwrap();
-                println!("after unwrap");
                 let quantity = position.quantity().abs();
 
                 // close at the worst possible price

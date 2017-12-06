@@ -167,16 +167,16 @@ impl Quote {
 
     #[allow(dead_code)]
     pub fn print_deets(&self) {
-        println!("=======================");
-        println!("name: {}", self.name());
-        println!("spread: {}", self.ask - self.bid);
-        println!("intrinsic: {}", self.intrinsic_value());
-        println!("extrinsic: {}", self.extrinsic_value());
-        println!("value ratio: {:.2}%", self.value_ratio());
-        println!("last price: {}", self.last_price);
-        println!("underlying price: {}", self.underlying_price);
-        println!("date: {} expiration: {}", self.date, self.expiration_date);
-        println!("days left: {}", self.days_until_expiration());
+        debug!("=======================");
+        debug!("name: {}", self.name());
+        debug!("spread: {}", self.ask - self.bid);
+        debug!("intrinsic: {}", self.intrinsic_value());
+        debug!("extrinsic: {}", self.extrinsic_value());
+        debug!("value ratio: {:.2}%", self.value_ratio());
+        debug!("last price: {}", self.last_price);
+        debug!("underlying price: {}", self.underlying_price);
+        debug!("date: {} expiration: {}", self.date, self.expiration_date);
+        debug!("days left: {}", self.days_until_expiration());
     }
 
     pub fn date(&self) -> DateTime<Utc> {

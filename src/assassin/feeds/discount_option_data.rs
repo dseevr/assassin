@@ -75,11 +75,6 @@ impl DataFeed for DiscountOptionData {
         let ask: f32 = v[2].parse().unwrap();
         let bid: f32 = v[4].parse().unwrap();
 
-        // TODO: this might be legit in certain market situations...
-        if bid > ask {
-            panic!("bid {} is > ask {}", bid, ask);
-        }
-
         let last_price: f32 = v[6].parse().unwrap();
         let call: String = v[7].parse().unwrap();
 

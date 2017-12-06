@@ -7,6 +7,8 @@ use assassin::traits::*;
 extern crate chrono;
 use self::chrono::prelude::*;
 
+extern crate env_logger;
+
 extern crate greenback;
 use greenback::Greenback as Money;
 
@@ -21,7 +23,7 @@ pub fn print_quote(q: &Quote, date: DateTime<Utc>) {
     let t = if call { "C" } else { "P" };
     let days = q.days_to_expiration(date);
 
-    println!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
+    debug!("{} {} {}/{} {} days left", t, strike, bid, ask, days);
 }
 
 #[allow(dead_code)]
@@ -114,11 +116,12 @@ impl PMCC {
 
     fn look_for_new_short_position_to_open(&self, broker: &Broker) -> Option<Order> {
         let underlying_price = broker.underlying_price_for(TICKER);
+        let date = broker.current_date();
 
-        // println!(
-        //     "** Searching for candidate quote for upper call ({} strikes below)",
-        //     STRIKES_BELOW
-        // );
+        debug!(
+            "** Searching for candidate quote for upper call ({} strikes below)",
+            STRIKES_BELOW
+        );
 
         let quotes: Vec<&Quote> = broker
             .nearest_quotes_expiring_between_n_days(SHORT_DAYS_OUT_MIN, SHORT_DAYS_OUT_MAX)
@@ -126,16 +129,16 @@ impl PMCC {
             .filter(|q| q.is_call())
             .collect();
 
-        // print_chain(quotes.clone(), date);
+        print_chain(quotes.clone(), date);
 
         let quote = match n_strikes_above(quotes.clone(), STRIKES_ABOVE, underlying_price) {
             Some(quote) => {
-                // println!("** Found candidate:");
-                // print_quote(quote, date);
+                debug!("** Found candidate:");
+                print_quote(quote, date);
                 quote
             }
             None => {
-                // println!("!! No quote found");
+                debug!("!! No quote found");
                 return None;
             }
         };
@@ -147,11 +150,12 @@ impl PMCC {
 
     fn look_for_new_long_position_to_open(&self, broker: &Broker) -> Option<Order> {
         let underlying_price = broker.underlying_price_for(TICKER);
+        let date = broker.current_date();
 
-        // println!(
-        //     "** Searching for candidate quote for lower call ({} strikes below)",
-        //     STRIKES_BELOW
-        // );
+        debug!(
+            "** Searching for candidate quote for lower call ({} strikes below)",
+            STRIKES_BELOW
+        );
 
         let quotes: Vec<&Quote> = broker
             .nearest_quotes_expiring_between_n_days(LONG_DAYS_OUT_MIN, LONG_DAYS_OUT_MAX)
@@ -159,16 +163,16 @@ impl PMCC {
             .filter(|q| q.is_call())
             .collect();
 
-        // print_chain(quotes.clone(), date);
+        print_chain(quotes.clone(), date);
 
         let quote = match n_strikes_below(quotes, STRIKES_BELOW, underlying_price) {
             Some(quote) => {
-                // println!("** Found candidate:");
-                // print_quote(quote, date);
+                debug!("** Found candidate:");
+                print_quote(quote, date);
                 quote
             }
             None => {
-                // println!("!! No quote found");
+                debug!("!! No quote found");
                 return None;
             }
         };
@@ -198,23 +202,21 @@ impl Model for PMCC {
 
         match positions.len() {
             2 => {
-                // println!("** Managing existing positions");
+                debug!("** Managing existing positions");
                 orders = self.manage_positions(broker, positions);
             }
-            1 => {
-                if positions[0].is_long() {
-                    // println!("** Opening new short position");
-                    if let Some(o) = self.look_for_new_short_position_to_open(broker) {
-                        orders.push(o);
-                    }
-                } else {
-                    if let Some(o) = self.look_for_new_long_position_to_open(broker) {
-                        orders.push(o);
-                    }
+            1 => if positions[0].is_long() {
+                debug!("** Opening new short position");
+                if let Some(o) = self.look_for_new_short_position_to_open(broker) {
+                    orders.push(o);
                 }
-            }
+            } else {
+                if let Some(o) = self.look_for_new_long_position_to_open(broker) {
+                    orders.push(o);
+                }
+            },
             0 => {
-                // println!("** Looking for new positions to open");
+                debug!("** Looking for new positions to open");
                 if let Some(o) = self.look_for_new_short_position_to_open(broker) {
                     orders.push(o);
                 }
@@ -225,7 +227,7 @@ impl Model for PMCC {
 
                 // only process orders if we found candidates for both
                 if orders.len() != 2 {
-                    println!("didn't find a candidate for both positions");
+                    debug!("didn't find a candidate for both positions");
                     orders.clear();
                 }
             }
@@ -238,12 +240,12 @@ impl Model for PMCC {
     fn after_simulation(&mut self, _broker: &Broker) {}
 
     fn show_bod_header(&self, broker: &Broker) {
-        println!(
+        info!(
             "===== start of {} ======= Balance: {} =================",
             broker.current_date(),
             broker.account_balance(),
         );
-        println!("");
+        info!("");
     }
 
     fn show_eod_summary(&self, broker: &Broker) {
@@ -251,29 +253,29 @@ impl Model for PMCC {
         let day = current_date.format("%Y-%m-%d").to_string();
 
         // show summary for day
-        println!("");
-        println!(" ----- {} end of day summary -----", day);
-        println!("");
-        println!(
+        info!("");
+        info!(" ----- {} end of day summary -----", day);
+        info!("");
+        info!(
             "Balance: {}\npositions open: {}\ntotal orders: {}\ncommish paid: {}",
             broker.account_balance(),
             broker.open_positions().len(),
             broker.total_order_count(),
             broker.commission_paid(),
         );
-        println!("");
+        info!("");
 
-        println!("Positions:");
+        info!("Positions:");
         for position in broker.open_positions() {
-            println!(
+            info!(
                 "{} - {} contracts - Expires: {} days",
                 position.symbol(),
                 position.quantity(),
                 position.expiration_date().num_days_from_ce()
                     - broker.current_date().num_days_from_ce(),
             );
-            println!("format: {}", position.expiration_date().format("%Y-%m-%d"));
+            info!("format: {}", position.expiration_date().format("%Y-%m-%d"));
         }
-        println!("");
+        info!("");
     }
 }
